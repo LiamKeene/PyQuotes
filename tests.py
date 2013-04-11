@@ -1,10 +1,10 @@
 import unittest
 import yql
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-from quote import get_yahoo_quote, validate_date_range
+from quote import get_yahoo_quote, validate_date_range, LOOKBACK_DAYS
 
 
 class GetYahooQuoteTestCase(unittest.TestCase):
@@ -62,6 +62,25 @@ class ValidateDateRangeTestCase(unittest.TestCase):
             ['2013-04-10', date(2013, 4, 12)],
         ]
 
+        # Number of days to lookback when no start_date is given
+        self.lookback_days = LOOKBACK_DAYS
+
+        # Define an end_date and start_date to reuse when required for other tests
+        self.start_date = date(2013, 4, 10)
+        self.end_date = date(2013, 4, 12)
+
+        # Define start and end dates to be used when they are not specified
+        self.no_end_date = datetime.today().date()
+        self.no_start_date = self.end_date - timedelta(days=self.lookback_days)
+        self.no_start_date_no_end_date = self.no_end_date - timedelta(days=self.lookback_days)
+
+        # Test date range for when no start_date is given
+        self.good_date_no_start = [None, self.end_date]
+        # Test date range for when no end_date is given
+        self.good_date_no_end = [self.start_date, '']
+        # Test date range for when no start or end date is given
+        self.good_date_no_start_no_end = ['', None]
+
         # Some bad date range inputs
         self.bad_date_not_list = [2013, {}, '']
         self.bad_date_wrong_length = [
@@ -82,6 +101,36 @@ class ValidateDateRangeTestCase(unittest.TestCase):
 
             # Check data returned matches valid date range
             self.assertEqual(self.valid_date, date_range)
+
+    def test_good_date_no_start(self):
+        """validate_date_range should return True even without range start."""
+        ret, date_range = validate_date_range(self.good_date_no_start)
+
+        # Check function returned True
+        self.assertTrue(ret)
+
+        # Check data returned matches valid date range
+        self.assertEqual(date_range, [self.no_start_date, self.end_date])
+
+    def test_good_date_no_end(self):
+        """validate_date_range should return True even without range end."""
+        ret, date_range = validate_date_range(self.good_date_no_end)
+
+        # Check function returned True
+        self.assertTrue(ret)
+
+        # Check data returned matches valid date range
+        self.assertEqual(date_range, [self.start_date, self.no_end_date])
+
+    def test_good_date_no_start_no_end(self):
+        """validate_date_range should return True even without range start or end."""
+        ret, date_range = validate_date_range(self.good_date_no_start_no_end)
+
+        # Check function returned True
+        self.assertTrue(ret)
+
+        # Check data returned matches valid date range
+        self.assertEqual(date_range, [self.no_start_date_no_end_date, self.no_end_date])
 
     def test_bad_date_not_list(self):
         """validate_date_range should raise a TypeError given a non-list date range."""

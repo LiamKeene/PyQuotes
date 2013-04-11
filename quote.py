@@ -1,6 +1,8 @@
 import yql
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+
+LOOKBACK_DAYS = 60
 
 def get_yahoo_quote(code, query_columns='*'):
     """Get a quote from the Yahoo YQL finance tables and return the result.
@@ -63,6 +65,14 @@ def validate_date_range(date_range):
     # test start and end dates for the correct type
     start_date = date_range[0]
     end_date = date_range[1]
+
+    # If the end_date is None or empty string, the default is today
+    if end_date is None or end_date is '':
+        end_date = datetime.today().date()
+
+    # if the start_date is None or empty string, the default is end_date minus a defined amount
+    if start_date is None or start_date is '':
+        start_date = end_date - timedelta(days=LOOKBACK_DAYS)
 
     if not isinstance(start_date, (str, date)) or not isinstance(end_date, (str, date)):
         raise TypeError('Range elements must be strings or date objects')
