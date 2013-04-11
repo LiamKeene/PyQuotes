@@ -52,6 +52,16 @@ class ValidateDateRangeTestCase(unittest.TestCase):
 
     """
     def setUp(self):
+        # The valid date range, which good date range inputs must match
+        self.valid_date = [date(2013, 4, 10), date(2013, 4, 12)]
+
+        # Some good date range inputs
+        self.good_dates = [
+            [date(2013, 4, 10), date(2013, 4, 12)],
+            ['2013-04-10', '2013-04-12'],
+            ['2013-04-10', date(2013, 4, 12)],
+        ]
+
         # Some bad date range inputs
         self.bad_date_not_list = [2013, {}, '']
         self.bad_date_wrong_length = [
@@ -61,6 +71,17 @@ class ValidateDateRangeTestCase(unittest.TestCase):
         self.bad_date_wrong_format = [date(2013, 4, 10), '12-04-2013']
         self.bad_date_backwards = ['2013-04-12', date(2013, 4, 10)]
         self.bad_date_future = [date(2020, 4, 10), '2020-04-12']
+
+    def test_good_date(self):
+        """validate_date_range should return True given valid date ranges."""
+        for good_date in self.good_dates:
+            ret, date_range = validate_date_range(good_date)
+
+            # Check function returned True
+            self.assertTrue(ret)
+
+            # Check data returned matches valid date range
+            self.assertEqual(self.valid_date, date_range)
 
     def test_bad_date_not_list(self):
         """validate_date_range should raise a TypeError given a non-list date range."""

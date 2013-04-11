@@ -83,4 +83,5 @@ def validate_date_range(date_range):
     if not start_date < end_date or not start_date <= date.today():
         raise ValueError('Start date must be before end date, and not in the future')
 
-    return False, date_range
+    # Finally (!) we have an acceptable date range list
+    return True, [start_date, end_date]
