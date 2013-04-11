@@ -132,8 +132,8 @@ def validate_date_range(date_range):
         except ValueError:
             raise ValueError('End date must be in %s format' %(DATE_FORMAT, ))
 
-    # date_range elements must be sane (start < end, start <= today)
-    if not start_date < end_date or not start_date <= date.today():
+    # date_range elements must be sane (start <= end, start <= today)
+    if not start_date <= end_date or not start_date <= date.today():
         raise ValueError('Start date must be before end date, and not in the future')
 
     # Finally (!) we have an acceptable date range list

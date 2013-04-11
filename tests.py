@@ -85,6 +85,9 @@ class ValidateDateRangeTestCase(unittest.TestCase):
             ['2013-04-10', '2013-04-12'],
             ['2013-04-10', date(2013, 4, 12)],
         ]
+        # Valid date ranges can be the same day
+        self.good_date_same_day = [date(2013, 4, 10), '2013-04-10']
+        self.valid_date_same_day = [date(2013, 4, 10), date(2013, 4, 10)]
 
         # Number of days to lookback when no start_date is given
         self.lookback_days = LOOKBACK_DAYS
@@ -125,6 +128,16 @@ class ValidateDateRangeTestCase(unittest.TestCase):
 
             # Check data returned matches valid date range
             self.assertEqual(self.valid_date, date_range)
+
+    def test_good_date_same_day(self):
+        """validate_date_range should return True given valid date range (same day)."""
+        ret, date_range = validate_date_range(self.good_date_same_day)
+
+        # Check function returned True
+        self.assertTrue(ret)
+
+        # Check data returned matches valid date range
+        self.assertEqual(self.valid_date_same_day, date_range)
 
     def test_good_date_no_start(self):
         """validate_date_range should return True even without range start."""
