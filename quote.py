@@ -111,7 +111,7 @@ def validate_date_range(date_range):
 
     # If the end_date is None or empty string, the default is today
     if end_date is None or end_date is '':
-        end_date = datetime.today().date()
+        end_date = date.today()
 
     # if the start_date is None or empty string, the default is end_date minus a defined amount
     if start_date is None or start_date is '':
