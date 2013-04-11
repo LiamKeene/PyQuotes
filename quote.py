@@ -1,3 +1,4 @@
+import urllib2
 import yql
 
 from datetime import date, datetime, timedelta
@@ -42,6 +43,31 @@ def get_yahoo_quote(code, query_columns='*'):
 
     raise Exception(error)
 
+def get_yahoo_csv_quote(code, symbols='nsxl1'):
+    """Get a quote from the Yahoo Finance CSV API and return the result.
+
+    Given the code of the stock and an optional list of symbols that correspond
+    to types of data to get in the quote.
+
+    """
+    if not len(code) == 3:
+        raise Exception('Stock code appears incorrect')
+
+    # Only interested in Australian equities at the moment
+    exchange = 'AX'
+
+    quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
+        '?s=%(code)s.%(exchange)s&f=%(symbols)s' \
+        % {
+            'code': code, 'exchange': exchange, 'symbols': symbols,
+        }
+
+    response = urllib2.urlopen(quote_url)
+
+    quote = response.read()
+
+    return True, quote
+
 def get_yahoo_quote_history(code, date_range):
     """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
@@ -82,6 +108,46 @@ def get_yahoo_quote_history(code, date_range):
 
     # Get the quote
     quote = response.results['quote']
+
+    return True, quote
+
+def get_yahoo_csv_quote_history(code, date_range):
+    """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
+
+    Given the code of the stock and a list containing the start and end dates of
+    the data.
+
+    """
+    # Validate dates first
+    ret, date_range = validate_date_range(date_range)
+
+    if not ret:
+        # raise exception or just quit - validate_date_range will raise an exceptions
+        raise Exception('Date range is no valid')
+
+    start_date = date_range[0]
+    end_date = date_range[1]
+
+    # Only interested in Australian equities at the moment
+    exchange = 'AX'
+
+    quote_url = 'http://ichart.yahoo.com/table.csv' \
+        '?s=%(code)s.%(exchange)s' \
+        '&a=%(start_month)s&b=%(start_day)s&c=%(start_year)s' \
+        '&d=%(end_month)s&e=%(end_day)s&f=%(end_year)s' \
+        '&g=%(period)s' \
+        '&ignore=.csv' \
+        % {
+            'code': code, 'exchange': exchange,
+            'start_month': start_date.month - 1, 'start_day': start_date.day,
+            'start_year': start_date.year, 'end_month': end_date.month - 1,
+            'end_day': end_date.day, 'end_year': end_date.year,
+            'period': 'd',
+        }
+
+    response = urllib2.urlopen(quote_url)
+
+    quote = response.read()
 
     return True, quote
 
