@@ -7,6 +7,7 @@ from decimal import Decimal
 from quote import get_yahoo_quote, get_yahoo_csv_quote
 from quote import get_yahoo_quote_history, get_yahoo_csv_quote_history
 from quote import parse_yahoo_csv_symbols, get_yahoo_csv_fields
+from quote import parse_yahoo_quote, parse_yahoo_history
 from quote import date_range_generator, validate_date_range, LOOKBACK_DAYS
 
 
@@ -172,6 +173,57 @@ class GetYahooCSVFieldsTestCase(unittest.TestCase):
         """get_yahoo_csv_fields should raise Exception if the symbol is inknown."""
         [self.assertRaises(Exception, get_yahoo_csv_fields, symbol_list)
             for symbol_list in self.test_unknown_symbols]
+
+
+class ParseYahooQuoteTestCase(unittest.TestCase):
+    """Test Case for the `parse_yahoo_quote` and `parse_yahoo_history` functions.
+
+    The `parse_yahoo_quote` function should correctly parse the information
+    from a Yahoo CSV stock quote.
+
+    The `parse_yahoo_history` function should correctly parse the information
+    from a Yahoo CSV stock history.
+
+    """
+    def setUp(self):
+        # The single quote will be dependant on the columns that are requested
+        self.quote_single = '"ABC.AX",3.330,1351200\r\n'
+        # Tuple of two-tuples containing the requested fields and data types
+        self.quote_fields = (('Code', str), ('Close', Decimal), ('Volume', Decimal), )
+
+        self.parsed_single = {
+            'Code': 'ABC.AX', 'Close': Decimal('3.330'), 'Volume': Decimal('1351200'),
+        }
+
+        # The historical quote has defined headers (the first row of CSV data)
+        self.quote_history = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
+            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
+            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
+            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
+        self.parsed_headers = [
+            'Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Adj Close'
+        ]
+        self.parsed_history = [
+            ['2013-04-12', '3.36', '3.38', '3.31', '3.33', '1351200', '3.33'],
+            ['2013-04-11', '3.39', '3.41', '3.33', '3.34', '1225300', '3.34'],
+            ['2013-04-10', '3.39', '3.41', '3.38', '3.40', '2076700', '3.40'],
+        ]
+
+    def test_parse_yahoo_quote_single(self):
+        """parse_yahoo_quote should be able to parse good quote."""
+        quote = parse_yahoo_quote(self.quote_single, self.quote_fields)
+
+        for key, value in self.parsed_single.items():
+
+            self.assertTrue(key in quote)
+            self.assertEqual(quote[key], self.parsed_single[key])
+
+    def test_parse_yahoo_quote_history(self):
+        """parse_yahoo_quote should be able to parse good historical quotes."""
+        headers, data = parse_yahoo_history(self.quote_history)
+
+        self.assertEqual(headers, self.parsed_headers)
+        self.assertEqual(data, self.parsed_history)
 
 
 class ValidateDateRangeTestCase(unittest.TestCase):

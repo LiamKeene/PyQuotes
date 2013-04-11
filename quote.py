@@ -1,3 +1,4 @@
+import csv
 import urllib2
 import yql
 
@@ -210,6 +211,47 @@ def get_yahoo_csv_fields(symbols):
         output.append((data['name'], data['type']))
 
     return tuple(output)
+
+def parse_yahoo_quote(raw_quote, fields):
+    """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
+    useful data.
+
+    """
+    # Use the CSV module to parse the quote
+    reader = csv.reader(raw_quote.split(','))
+
+    # Read the raw data
+    raw_data = [row[0] for row in reader]
+
+    output = {}
+
+    for i in range(len(fields)):
+        field_name, field_type = fields[i]
+        output[field_name] = field_type(raw_data[i])
+
+    return output
+
+def parse_yahoo_history(raw_quote):
+    """Parse the raw data from a Yahoo finance CSV historical quote into a
+    dictionary of useful data.
+
+    """
+    # Use the CSV module to parse the quote
+    reader = csv.reader(raw_quote.split('\n'))
+
+    # Read the raw data
+    raw_data = [row for row in reader]
+
+    # Remove any empty rows
+    raw_data.remove([])
+
+    # Remove the headers
+    headers = raw_data.pop(0)
+
+    # Trade data is the remaining CSV data
+    data = raw_data
+
+    return headers, data
 
 def validate_date_range(date_range):
     """Validate a date range.
