@@ -7,7 +7,7 @@ from decimal import Decimal
 from quote import raw_yahoo_quote, raw_yahoo_csv_quote
 from quote import raw_yahoo_quote_history, raw_yahoo_csv_quote_history
 from quote import parse_yahoo_csv_symbols, get_yahoo_csv_fields
-from quote import parse_yahoo_quote, parse_yahoo_history
+from quote import parse_yahoo_csv_quote, parse_yahoo_csv_history
 from quote import date_range_generator, validate_date_range, LOOKBACK_DAYS
 
 
@@ -176,12 +176,12 @@ class GetYahooCSVFieldsTestCase(unittest.TestCase):
 
 
 class ParseYahooQuoteTestCase(unittest.TestCase):
-    """Test Case for the `parse_yahoo_quote` and `parse_yahoo_history` functions.
+    """Test Case for the `parse_yahoo_csv_quote` and `parse_yahoo_csv_history` functions.
 
-    The `parse_yahoo_quote` function should correctly parse the information
+    The `parse_yahoo_csv_quote` function should correctly parse the information
     from a Yahoo CSV stock quote.
 
-    The `parse_yahoo_history` function should correctly parse the information
+    The `parse_yahoo_csv_history` function should correctly parse the information
     from a Yahoo CSV stock history.
 
     """
@@ -209,18 +209,18 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             ['2013-04-10', '3.39', '3.41', '3.38', '3.40', '2076700', '3.40'],
         ]
 
-    def test_parse_yahoo_quote_single(self):
-        """parse_yahoo_quote should be able to parse good quote."""
-        quote = parse_yahoo_quote(self.quote_single, self.quote_fields)
+    def test_parse_yahoo_csv_quote_single(self):
+        """parse_yahoo_csv_quote should be able to parse good quote."""
+        quote = parse_yahoo_csv_quote(self.quote_single, self.quote_fields)
 
         for key, value in self.parsed_single.items():
 
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], self.parsed_single[key])
 
-    def test_parse_yahoo_quote_history(self):
-        """parse_yahoo_quote should be able to parse good historical quotes."""
-        headers, data = parse_yahoo_history(self.quote_history)
+    def test_parse_yahoo_csv_quote_history(self):
+        """parse_yahoo_csv_quote should be able to parse good historical quotes."""
+        headers, data = parse_yahoo_csv_history(self.quote_history)
 
         self.assertEqual(headers, self.parsed_headers)
         self.assertEqual(data, self.parsed_history)

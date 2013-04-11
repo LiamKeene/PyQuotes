@@ -212,7 +212,7 @@ def get_yahoo_csv_fields(symbols):
 
     return tuple(output)
 
-def parse_yahoo_quote(raw_quote, fields):
+def parse_yahoo_csv_quote(raw_quote, fields):
     """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
     useful data.
 
@@ -231,7 +231,7 @@ def parse_yahoo_quote(raw_quote, fields):
 
     return output
 
-def parse_yahoo_history(raw_quote):
+def parse_yahoo_csv_history(raw_quote):
     """Parse the raw data from a Yahoo finance CSV historical quote into a
     dictionary of useful data.
 
