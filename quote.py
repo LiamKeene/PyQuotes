@@ -2,6 +2,7 @@ import urllib2
 import yql
 
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 
 LOOKBACK_DAYS = 60
 
@@ -175,6 +176,38 @@ def parse_yahoo_csv_symbols(symbols):
         else:
             # Else append the digit to the previous letter
             output[count-1] = '%s%s' % (symbol_list[i-1], symbol_list[i])
+
+    return output
+
+def get_yahoo_csv_fields(symbols):
+    """Returns field names and types from given Yahoo CSV symbols.
+
+    Each symbol needs it's name and type defined otherwise an Exception is
+    raised.
+
+    """
+    known_symbols = {
+        'g': {'name': 'Low', 'type': Decimal, },
+        'h': {'name': 'High', 'type': Decimal, },
+        'l1': {'name': 'Close', 'type': Decimal, },
+        'n': {'name': 'Name', 'type': str, },
+        'o': {'name': 'Open', 'type': Decimal, },
+        's': {'name': 'Symbol', 'type': str, },
+        'v': {'name': 'Volume', 'type': Decimal, },
+        'x': {'name': 'Exchange', 'type': str, },
+    }
+
+    output = {}
+
+    for symbol in symbols:
+        if not known_symbols.has_key(symbol):
+            raise NotImplementedError('Symbol: %s is not known or unhandled' % (symbol, ))
+
+        # Find symbol in our known symbols
+        data = known_symbols[symbol]
+
+        # Add the field name and type to the output
+        output[data['name']] = data['type']
 
     return output
 

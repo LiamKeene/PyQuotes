@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from quote import get_yahoo_quote, get_yahoo_csv_quote
 from quote import get_yahoo_quote_history, get_yahoo_csv_quote_history
-from quote import parse_yahoo_csv_symbols
+from quote import parse_yahoo_csv_symbols, get_yahoo_csv_fields
 from quote import date_range_generator, validate_date_range, LOOKBACK_DAYS
 
 
@@ -131,6 +131,47 @@ class ParseYahooCSVSymbolsTestCase(unittest.TestCase):
         """parse_yahoo_symbols should return a correctly parsed list of symbols."""
         [self.assertEqual(parse_yahoo_csv_symbols(symbol_str), symbol_list)
             for symbol_str, symbol_list in self.parsed_symbols_dict.items()]
+
+
+class GetYahooCSVFieldsTestCase(unittest.TestCase):
+    """Test Case for the `get_yahoo_csv_fields` function.
+
+    The `get_yahoo_csv_fields` function should return a dictionary that contains
+    the CSV field names and data type given field symbols.
+
+    The symbols are found at this url http://www.jarloo.com/yahoo_finance/ and
+    are hard-coded here (a db model or fixtures may be useful in the future).
+
+    """
+    def setUp(self):
+        self.test_data = [
+            [
+                ['n', 's', 'x', 'l1'],
+                {
+                    'Name': str, 'Symbol': str, 'Exchange': str, 'Close': Decimal,
+                },
+            ],
+            [
+                ['s', 'o', 'h', 'g', 'l1', 'v'],
+                {
+                    'Symbol': str, 'Open': Decimal, 'High': Decimal,
+                    'Low': Decimal, 'Close': Decimal, 'Volume': Decimal,
+                },
+            ]
+        ]
+        self.test_unknown_symbols = [
+            ['f', ],
+        ]
+
+    def test_get_yahoo_csv_fields(self):
+        """get_yahoo_csv_fields should return dictionary from list of symbols."""
+        [self.assertEqual(get_yahoo_csv_fields(symbol_list), field_dict)
+            for symbol_list, field_dict in self.test_data]
+
+    def test_unknown_symbols(self):
+        """get_yahoo_csv_fields should raise Exception if the symbol is inknown."""
+        [self.assertRaises(Exception, get_yahoo_csv_fields, symbol_list)
+            for symbol_list in self.test_unknown_symbols]
 
 
 class ValidateDateRangeTestCase(unittest.TestCase):
