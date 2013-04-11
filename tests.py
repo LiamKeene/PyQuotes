@@ -4,27 +4,27 @@ import yql
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-from quote import get_yahoo_quote, get_yahoo_csv_quote
-from quote import get_yahoo_quote_history, get_yahoo_csv_quote_history
+from quote import raw_yahoo_quote, raw_yahoo_csv_quote
+from quote import raw_yahoo_quote_history, raw_yahoo_csv_quote_history
 from quote import parse_yahoo_csv_symbols, get_yahoo_csv_fields
 from quote import parse_yahoo_quote, parse_yahoo_history
 from quote import date_range_generator, validate_date_range, LOOKBACK_DAYS
 
 
-class GetYahooQuoteTestCase(unittest.TestCase):
+class RawYahooQuoteTestCase(unittest.TestCase):
     """Test Case for Yahoo quote functions.
 
-    The `get_yahoo_quote` function should query Yahoo's finance tables using YQL
+    The `raw_yahoo_quote` function should query Yahoo's finance tables using YQL
     and return the latest quote for a particular stock (delayed by 20min).
 
-    The `get_yahoo_csv_quote` function should query Yahoo's finance CSV API and
+    The `raw_yahoo_csv_quote` function should query Yahoo's finance CSV API and
     return the latest quote for a particular stock (delayed by 20min).
 
-    The `get_yahoo_quote_history` function should query Yahoo's finance tables
+    The `raw_yahoo_quote_history` function should query Yahoo's finance tables
     using YQL and return the historical quote data for a particular stock over
     a given date range.
 
-    The `get_yahoo_csv_quote_history` function should query Yahoo's finance CSV
+    The `raw_yahoo_csv_quote_history` function should query Yahoo's finance CSV
     API and return the historical quote data for a particular stock over a given
     date range.
 
@@ -49,41 +49,41 @@ class GetYahooQuoteTestCase(unittest.TestCase):
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
 
     def test_quote_good_code(self):
-        """get_yahoo_quote should return True given a valid code."""
-        ret, quote = get_yahoo_quote(self.good_code)
+        """raw_yahoo_quote should return True given a valid code."""
+        ret, quote = raw_yahoo_quote(self.good_code)
         self.assertTrue(ret)
 
     def test_quote_bad_code(self):
-        """get_yahoo_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, get_yahoo_quote, self.bad_code)
+        """raw_yahoo_quote should raise an Exception given an invalid code."""
+        self.assertRaises(Exception, raw_yahoo_quote, self.bad_code)
 
     def test_quote_get_columns(self):
-        """get_yahoo_quote should return the requested column only."""
-        ret, quote = get_yahoo_quote(self.good_code, self.columns)
+        """raw_yahoo_quote should return the requested column only."""
+        ret, quote = raw_yahoo_quote(self.good_code, self.columns)
 
         for key, value in self.data_dict.items():
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], self.data_dict[key])
 
     def test_csv_quote_good_code(self):
-        """get_yahoo_csv_quote should return True given a valid code."""
-        ret, quote = get_yahoo_csv_quote(self.good_code)
+        """raw_yahoo_csv_quote should return True given a valid code."""
+        ret, quote = raw_yahoo_csv_quote(self.good_code)
         self.assertTrue(ret)
 
     def test_csv_quote_bad_code(self):
-        """get_yahoo_csv_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, get_yahoo_csv_quote, self.bad_code)
+        """raw_yahoo_csv_quote should raise an Exception given an invalid code."""
+        self.assertRaises(Exception, raw_yahoo_csv_quote, self.bad_code)
 
     def test_csv_quote_get_columns(self):
-        """get_yahoo_csv_quote should return the requested columns only."""
-        ret, quote = get_yahoo_csv_quote(self.good_code, self.csv_columns)
+        """raw_yahoo_csv_quote should return the requested columns only."""
+        ret, quote = raw_yahoo_csv_quote(self.good_code, self.csv_columns)
 
         self.assertTrue(ret)
         self.assertEqual(quote, self.csv_data)
 
     def test_history_good_code(self):
-        """get_yahoo_quote_history should return True given a valid code."""
-        ret, quotes = get_yahoo_quote_history(self.good_code, self.test_dates)
+        """raw_yahoo_quote_history should return True given a valid code."""
+        ret, quotes = raw_yahoo_quote_history(self.good_code, self.test_dates)
 
         self.assertTrue(ret)
         self.assertEqual(type(quotes), list)
@@ -93,8 +93,8 @@ class GetYahooQuoteTestCase(unittest.TestCase):
             self.assertEqual(quotes[i]['Date'], self.test_date_range[i])
 
     def test_csv_history_good_code(self):
-        """get_yahoo_csv_quote_history should return True given a valid code."""
-        ret, quotes = get_yahoo_csv_quote_history(self.good_code, self.test_dates)
+        """raw_yahoo_csv_quote_history should return True given a valid code."""
+        ret, quotes = raw_yahoo_csv_quote_history(self.good_code, self.test_dates)
         self.assertTrue(ret)
 
         # This would ideally be done in another function

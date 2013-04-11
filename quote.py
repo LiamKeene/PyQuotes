@@ -7,7 +7,7 @@ from decimal import Decimal
 
 LOOKBACK_DAYS = 60
 
-def get_yahoo_quote(code, query_columns='*'):
+def raw_yahoo_quote(code, query_columns='*'):
     """Get a quote from the Yahoo YQL finance tables and return the result.
 
     Given the code of the stock and an optional list of columns of data to get
@@ -45,7 +45,7 @@ def get_yahoo_quote(code, query_columns='*'):
 
     raise Exception(error)
 
-def get_yahoo_csv_quote(code, symbols='nsxl1'):
+def raw_yahoo_csv_quote(code, symbols='nsxl1'):
     """Get a quote from the Yahoo Finance CSV API and return the result.
 
     Given the code of the stock and an optional list of symbols that correspond
@@ -70,7 +70,7 @@ def get_yahoo_csv_quote(code, symbols='nsxl1'):
 
     return True, quote
 
-def get_yahoo_quote_history(code, date_range):
+def raw_yahoo_quote_history(code, date_range):
     """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
     Given the code of the stock and a list containing the start and end dates of
@@ -113,7 +113,7 @@ def get_yahoo_quote_history(code, date_range):
 
     return True, quote
 
-def get_yahoo_csv_quote_history(code, date_range):
+def raw_yahoo_csv_quote_history(code, date_range):
     """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
 
     Given the code of the stock and a list containing the start and end dates of
