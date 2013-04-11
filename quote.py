@@ -153,7 +153,7 @@ def get_yahoo_csv_quote_history(code, date_range):
     return True, quote
 
 def parse_yahoo_csv_symbols(symbols):
-    """Parse a string of Yahoo CSV symbols and return them as a list.
+    """Parse a string of Yahoo CSV symbols and return them as a tuple.
 
     This is required as the symbols are either single letters or a letter and
     an integer.
@@ -177,7 +177,7 @@ def parse_yahoo_csv_symbols(symbols):
             # Else append the digit to the previous letter
             output[count-1] = '%s%s' % (symbol_list[i-1], symbol_list[i])
 
-    return output
+    return tuple(output)
 
 def get_yahoo_csv_fields(symbols):
     """Returns field names and types from given Yahoo CSV symbols.
@@ -197,7 +197,7 @@ def get_yahoo_csv_fields(symbols):
         'x': {'name': 'Exchange', 'type': str, },
     }
 
-    output = {}
+    output = []
 
     for symbol in symbols:
         if not known_symbols.has_key(symbol):
@@ -207,9 +207,9 @@ def get_yahoo_csv_fields(symbols):
         data = known_symbols[symbol]
 
         # Add the field name and type to the output
-        output[data['name']] = data['type']
+        output.append((data['name'], data['type']))
 
-    return output
+    return tuple(output)
 
 def validate_date_range(date_range):
     """Validate a date range.

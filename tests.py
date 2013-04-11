@@ -114,17 +114,17 @@ class ParseYahooCSVSymbolsTestCase(unittest.TestCase):
     """Test Case for the `parse_yahoo_csv_csymbols` function.
 
     The `parse_yahoo_csv_symbols` function should parse a string of Yahoo CSV tags
-    into a list of those tags.  Not as simple as it sounds as some tags consist
+    into a tuple of those tags.  Not as simple as it sounds as some tags consist
     of a letter and number.
 
     """
     def setUp(self):
         self.parsed_symbols_dict = {
-            'nsx': ['n', 's', 'x'],
-            'ohgl1v': ['o', 'h', 'g', 'l1', 'v', ],
-            'nsl1hr5j1ym3m4n4xd1': [
+            'nsx': ('n', 's', 'x'),
+            'ohgl1v': ('o', 'h', 'g', 'l1', 'v', ),
+            'nsl1hr5j1ym3m4n4xd1': (
                 'n', 's', 'l1', 'h', 'r5', 'j1', 'y', 'm3', 'm4', 'n4', 'x', 'd1'
-            ],
+            ),
         }
 
     def test_parse_yahoo_csv_symbols(self):
@@ -136,8 +136,8 @@ class ParseYahooCSVSymbolsTestCase(unittest.TestCase):
 class GetYahooCSVFieldsTestCase(unittest.TestCase):
     """Test Case for the `get_yahoo_csv_fields` function.
 
-    The `get_yahoo_csv_fields` function should return a dictionary that contains
-    the CSV field names and data type given field symbols.
+    The `get_yahoo_csv_fields` function should return a tuple of two-tuples that
+    contain the CSV field names and data type given field symbols.
 
     The symbols are found at this url http://www.jarloo.com/yahoo_finance/ and
     are hard-coded here (a db model or fixtures may be useful in the future).
@@ -146,21 +146,21 @@ class GetYahooCSVFieldsTestCase(unittest.TestCase):
     def setUp(self):
         self.test_data = [
             [
-                ['n', 's', 'x', 'l1'],
-                {
-                    'Name': str, 'Symbol': str, 'Exchange': str, 'Close': Decimal,
-                },
+                ('n', 's', 'x', 'l1'),
+                (
+                    ('Name', str), ('Symbol', str), ('Exchange', str), ('Close', Decimal),
+                ),
             ],
             [
-                ['s', 'o', 'h', 'g', 'l1', 'v'],
-                {
-                    'Symbol': str, 'Open': Decimal, 'High': Decimal,
-                    'Low': Decimal, 'Close': Decimal, 'Volume': Decimal,
-                },
+                ('s', 'o', 'h', 'g', 'l1', 'v'),
+                (
+                    ('Symbol', str), ('Open', Decimal), ('High', Decimal),
+                    ('Low', Decimal), ('Close', Decimal), ('Volume', Decimal),
+                ),
             ]
         ]
         self.test_unknown_symbols = [
-            ['f', ],
+            ('f', ),
         ]
 
     def test_get_yahoo_csv_fields(self):
