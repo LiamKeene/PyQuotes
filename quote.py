@@ -151,6 +151,33 @@ def get_yahoo_csv_quote_history(code, date_range):
 
     return True, quote
 
+def parse_yahoo_csv_symbols(symbols):
+    """Parse a string of Yahoo CSV symbols and return them as a list.
+
+    This is required as the symbols are either single letters or a letter and
+    an integer.
+
+    """
+    # Split symbols into a list
+    symbol_list = list(symbols)
+
+    # Symbol output
+    output = []
+    # Output counter
+    count = 0
+
+    # Find integers in the symbols and attach them to the previous character
+    for i in range(len(symbol_list)):
+        # If the character is a letter append to output
+        if not symbol_list[i].isdigit():
+            output.append(symbol_list[i])
+            count = len(output)
+        else:
+            # Else append the digit to the previous letter
+            output[count-1] = '%s%s' % (symbol_list[i-1], symbol_list[i])
+
+    return output
+
 def validate_date_range(date_range):
     """Validate a date range.
 

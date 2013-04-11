@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from quote import get_yahoo_quote, get_yahoo_csv_quote
 from quote import get_yahoo_quote_history, get_yahoo_csv_quote_history
+from quote import parse_yahoo_csv_symbols
 from quote import date_range_generator, validate_date_range, LOOKBACK_DAYS
 
 
@@ -107,6 +108,29 @@ class GetYahooQuoteTestCase(unittest.TestCase):
         for i in range(len(quotes)):
             quote = quotes[i].split(',')
             self.assertEqual(quote[0], self.test_date_range[i])
+
+
+class ParseYahooCSVSymbolsTestCase(unittest.TestCase):
+    """Test Case for the `parse_yahoo_csv_csymbols` function.
+
+    The `parse_yahoo_csv_symbols` function should parse a string of Yahoo CSV tags
+    into a list of those tags.  Not as simple as it sounds as some tags consist
+    of a letter and number.
+
+    """
+    def setUp(self):
+        self.parsed_symbols_dict = {
+            'nsx': ['n', 's', 'x'],
+            'ohgl1v': ['o', 'h', 'g', 'l1', 'v', ],
+            'nsl1hr5j1ym3m4n4xd1': [
+                'n', 's', 'l1', 'h', 'r5', 'j1', 'y', 'm3', 'm4', 'n4', 'x', 'd1'
+            ],
+        }
+
+    def test_parse_yahoo_csv_symbols(self):
+        """parse_yahoo_symbols should return a correctly parsed list of symbols."""
+        [self.assertEqual(parse_yahoo_csv_symbols(symbol_str), symbol_list)
+            for symbol_str, symbol_list in self.parsed_symbols_dict.items()]
 
 
 class ValidateDateRangeTestCase(unittest.TestCase):
