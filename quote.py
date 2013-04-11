@@ -42,6 +42,49 @@ def get_yahoo_quote(code, query_columns='*'):
 
     raise Exception(error)
 
+def get_yahoo_quote_history(code, date_range):
+    """Get a list of quotes from the Yahoo YQL finance tables and return the result.
+
+    Given the code of the stock and a list containing the start and end dates of
+    the data.
+
+    """
+    # Validate dates first
+    ret, date_range = validate_date_range(date_range)
+
+    if not ret:
+        # raise exception or just quit - validate_date_range will raise an exceptions
+        raise Exception('Date range is no valid')
+
+    start_date = date_range[0]
+    end_date = date_range[1]
+
+    # Only interested in Australian equities at the moment
+    exchange = 'AX'
+
+    # Create query object - must set the environment for community tables
+    y = yql.Public()
+    env = 'http://www.datatables.org/alltables.env'
+
+    # Execute the query and get the response
+    query = 'select * from yahoo.finance.historicaldata ' \
+        'where symbol = "%(code)s.%(exchange)s" ' \
+        'and startDate = "%(start_date)s" and endDate = "%(end_date)s"' \
+        % {
+            'code': code, 'exchange': exchange,
+            'start_date': start_date, 'end_date': end_date,
+        }
+    response = y.execute(query, env=env)
+
+    # If the response results are null there was an error
+    if response.results is None:
+        raise Exception('Error with results')
+
+    # Get the quote
+    quote = response.results['quote']
+
+    return True, quote
+
 def validate_date_range(date_range):
     """Validate a date range.
 
