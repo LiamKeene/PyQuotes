@@ -1,7 +1,10 @@
 import unittest
 import yql
 
-from quote import get_yahoo_quote
+from datetime import date
+from decimal import Decimal
+
+from quote import get_yahoo_quote, validate_date_range
 
 
 class GetYahooQuoteTestCase(unittest.TestCase):
@@ -35,6 +38,55 @@ class GetYahooQuoteTestCase(unittest.TestCase):
         for key, value in self.data_dict.items():
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], self.data_dict[key])
+
+
+class ValidateDateRangeTestCase(unittest.TestCase):
+    """Test Case for the `validate_date_range` function.
+
+    The `validate_date_range` function will return True if the given date range
+    validates against a set of custom rules.  Date ranges are used to extract
+    historical data for a given stock.
+
+    A valid date range is a list of two elements; each element may be a date
+    object or a string representation of the date.
+
+    """
+    def setUp(self):
+        # Some bad date range inputs
+        self.bad_date_not_list = [2013, {}, '']
+        self.bad_date_wrong_length = [
+            [], ['2013-04-10'], ['2013-04-10', '2013-04-11', '2013-04-12', ]
+        ]
+        self.bad_date_wrong_types = [[2013, ''], [None, Decimal('2013')], ]
+        self.bad_date_wrong_format = [date(2013, 4, 10), '12-04-2013']
+        self.bad_date_backwards = ['2013-04-12', date(2013, 4, 10)]
+        self.bad_date_future = [date(2020, 4, 10), '2020-04-12']
+
+    def test_bad_date_not_list(self):
+        """validate_date_range should raise a TypeError given a non-list date range."""
+        [self.assertRaises(TypeError, validate_date_range, not_list)
+            for not_list in self.bad_date_not_list]
+
+    def test_bad_date_wrong_length(self):
+        """validate_date_range should raise a ValueError given a list of incorrect length."""
+        [self.assertRaises(ValueError, validate_date_range, wrong_length)
+            for wrong_length in self.bad_date_wrong_length]
+
+    def test_bad_date_wrong_type(self):
+        """validate_date_range should raise a TypeError given a list with wrong types."""
+        self.assertRaises(TypeError, validate_date_range, self.bad_date_wrong_types)
+
+    def test_bad_date_wrong_format(self):
+        """validate_date_range should raise a TypeError given a list with wrong format."""
+        self.assertRaises(ValueError, validate_date_range, self.bad_date_wrong_format)
+
+    def test_bad_date_backwards(self):
+        """validate_date_range should raise an Exception given a backwards date range."""
+        self.assertRaises(ValueError, validate_date_range, self.bad_date_backwards)
+
+    def test_bad_date_future(self):
+        """validate_date_range should raise an Exception given a future date range."""
+        self.assertRaises(ValueError, validate_date_range, self.bad_date_future)
 
 
 if __name__ == '__main__':
