@@ -4,7 +4,8 @@ import yql
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-from quote import get_yahoo_quote, validate_date_range, LOOKBACK_DAYS
+from quote import get_yahoo_quote
+from quote import date_range_generator, validate_date_range, LOOKBACK_DAYS
 
 
 class GetYahooQuoteTestCase(unittest.TestCase):
@@ -159,6 +160,43 @@ class ValidateDateRangeTestCase(unittest.TestCase):
         self.assertRaises(ValueError, validate_date_range, self.bad_date_future)
 
 
+class DateRangeGeneratorTestCase(unittest.TestCase):
+    """Test Case for the `date_range_generator` function.
+
+    The `date_range_generator` function will return a generator of date objects
+    if given a list containing the start and end dates of the range.
+
+    """
+    def setUp(self):
+        self.start_date = date(2013, 4, 10)
+        self.end_date = date(2013, 4, 12)
+
+        self.start_datetime = datetime(2013, 4, 10, 15, 44, 56)
+        self.end_datetime = datetime(2013, 4, 12, 6, 1, 25)
+
+        self.generated_date_range = [
+            date(2013, 4, 10), date(2013, 4, 11), date(2013, 4, 12)
+        ]
+
+        self.bad_date_wrong_types = ['2013-04-10', 2013]
+
+    def test_date_range_generator(self):
+        """date_range_generator should return a generator of dates if given date bounds."""
+        date_gen = date_range_generator(self.start_date, self.end_date)
+
+        self.assertEqual(list(date_gen), self.generated_date_range)
+
+    def test_generate_datetime_range(self):
+        """date_range_generator should return a generator of dates if given datetime bounds."""
+        date_gen = date_range_generator(self.start_datetime, self.end_datetime)
+
+        self.assertEqual(list(date_gen), self.generated_date_range)
+
+    def test_generate_bad_date_wrong_types(self):
+        """date_range_generator should raise an Exception if the inputs are not dates."""
+        self.assertRaises(Exception, date_range_generator,
+            (self.bad_date_wrong_types[0], self.bad_date_wrong_types[1]))
+
+
 if __name__ == '__main__':
     unittest.main()
-

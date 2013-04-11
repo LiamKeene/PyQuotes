@@ -95,3 +95,27 @@ def validate_date_range(date_range):
 
     # Finally (!) we have an acceptable date range list
     return True, [start_date, end_date]
+
+def date_range_generator(start_date, end_date):
+    """Returns a generator of the dates bound by the given start and end date.
+
+    The start and end dates must be date (or datetime) objects
+
+    """
+    # Only allow date or datetime objects
+    if not isinstance(start_date, (date, datetime)) or \
+            not isinstance(end_date, (date, datetime)):
+        raise Exception('Start and end dates must be date or datetime objects.')
+
+    # If range bounds are datetime, extract the date component
+    if isinstance(start_date, datetime):
+        start_date = start_date.date()
+    if isinstance(end_date, datetime):
+        end_date = end_date.date()
+
+    # Create a generator of date objects between the start and end dates
+    while True:
+        yield start_date
+        start_date = start_date + timedelta(days=1)
+        if start_date > end_date:
+            break
