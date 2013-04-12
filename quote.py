@@ -184,6 +184,34 @@ def parse_yahoo_csv_quote_symbols(symbols):
 
     return tuple(output)
 
+def get_yahoo_quote_fields(fields):
+    """Returns field names and types from given Yahoo YQL field names.
+
+    Each field needs it's name and type defined otherwise an Exception is
+    raised.
+
+    """
+    known_fields = {
+        'Symbol': {'name': 'Code', 'type': str, },
+        'LastTradePriceOnly': {'name': 'Close', 'type': Decimal, },
+        'Volume': {'name': 'Volume', 'type': Decimal, },
+    }
+
+    output = []
+
+    for field in fields:
+        if not known_fields.has_key(field):
+            raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+
+        # Find field in our known fields
+        data = known_fields[field]
+
+        # Add the field name and type to the output
+        output.append((data['name'], data['type']))
+
+    # Convert to tuple to stop modifcation of the output
+    return tuple(output)
+
 def get_yahoo_csv_quote_fields(symbols):
     """Returns field names and types from given Yahoo CSV symbols.
 
