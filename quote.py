@@ -240,6 +240,12 @@ def parse_yahoo_csv_quote_history(raw_quote):
     dictionary of useful data.
 
     """
+    # Data types for the historical quote fields
+    data_types = {
+        'Date': parse_date, 'Open': Decimal, 'High': Decimal, 'Low': Decimal,
+        'Close': Decimal, 'Volume': Decimal, 'Adj Close': Decimal,
+    }
+
     # Use the CSV module to parse the quote
     reader = csv.reader(raw_quote.split('\n'))
 
@@ -261,9 +267,15 @@ def parse_yahoo_csv_quote_history(raw_quote):
     for i in range(len(data)):
         # Create dictionary for this data
         dic = {}
-        for j in range(len(headers)):
-            dic[headers[j]] = data[i][j]
 
+        for j in range(len(headers)):
+             # Lookup data type
+            data_type = data_types[headers[j]]
+
+            # Apply the datatype
+            dic[headers[j]] = data_type(data[i][j])
+
+        # Add the data dictionary to the output
         output.append(dic)
 
     return output

@@ -204,16 +204,22 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
 
         self.parsed_history = [
             {
-                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38', 'Low': '3.31',
-                'Close': '3.33', 'Volume': '1351200', 'Adj Close': '3.33',
+                'Date': date(2013, 4, 12),
+                'Open': Decimal('3.36'), 'High': Decimal('3.38'),
+                'Low': Decimal('3.31'), 'Close': Decimal('3.33'),
+                'Volume': Decimal('1351200'), 'Adj Close': Decimal('3.33'),
             },
             {
-                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41', 'Low': '3.33',
-                'Close': '3.34', 'Volume': '1225300', 'Adj Close': '3.34',
+                'Date': date(2013, 4, 11),
+                'Open': Decimal('3.39'), 'High': Decimal('3.41'),
+                'Low': Decimal('3.33'), 'Close': Decimal('3.34'),
+                'Volume': Decimal('1225300'), 'Adj Close': Decimal('3.34'),
             },
             {
-                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41', 'Low': '3.38',
-                'Close': '3.40', 'Volume': '2076700', 'Adj Close': '3.40',
+                'Date': date(2013, 4, 10),
+                'Open': Decimal('3.39'), 'High': Decimal('3.41'),
+                'Low': Decimal('3.38'), 'Close': Decimal('3.40'),
+                'Volume': Decimal('2076700'), 'Adj Close': Decimal('3.40'),
             },
         ]
 
