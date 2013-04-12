@@ -13,22 +13,6 @@ class RawYahooQuoteTestCase(unittest.TestCase):
     The `raw_yahoo_quote` function should query Yahoo's finance tables using YQL
     and return the latest quote for a particular stock (delayed by 20min).
 
-    The `raw_yahoo_csv_quote` function should query Yahoo's finance CSV API and
-    return the latest quote for a particular stock (delayed by 20min).
-
-    The `raw_yahoo_quote_history` function should query Yahoo's finance tables
-    using YQL and return the historical quote data for a particular stock over
-    a given date range.
-
-    The `raw_yahoo_csv_quote_history` function should query Yahoo's finance CSV
-    API and return the historical quote data for a particular stock over a given
-    date range.
-
-    The date range must be a list containing the start and end dates.  The dates
-    may be date objects (with year, month and day specified), strings or empty.
-    If the start date is empty a reasonable default is used.  If the end date is
-    empty the current date is used.
-
     """
     def setUp(self):
         self.good_code = 'ABC'
@@ -37,12 +21,6 @@ class RawYahooQuoteTestCase(unittest.TestCase):
         self.columns = ['Name', 'Symbol', 'StockExchange', ]
         self.data = [u'ADEL BRTN FPO', u'ABC.AX', u'ASX', ]
         self.data_dict = dict(zip(self.columns, self.data))
-
-        self.csv_columns = 'nsx'
-        self.csv_data = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
-
-        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
 
     def test_quote_good_code(self):
         """raw_yahoo_quote should return True given a valid code."""
@@ -61,6 +39,19 @@ class RawYahooQuoteTestCase(unittest.TestCase):
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], self.data_dict[key])
 
+
+class RawYahooCSVQuoteTestCase(unittest.TestCase):
+    """The `raw_yahoo_csv_quote` function should query Yahoo's finance CSV API and
+    return the latest quote for a particular stock (delayed by 20min).
+
+    """
+    def setUp(self):
+        self.good_code = 'ABC'
+        self.bad_code = 'A'
+
+        self.csv_columns = 'nsx'
+        self.csv_data = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
+
     def test_csv_quote_good_code(self):
         """raw_yahoo_csv_quote should return True given a valid code."""
         ret, quote = raw_yahoo_csv_quote(self.good_code)
@@ -77,6 +68,24 @@ class RawYahooQuoteTestCase(unittest.TestCase):
         self.assertTrue(ret)
         self.assertEqual(quote, self.csv_data)
 
+
+class RawYahooQuoteHistoryTestCase(unittest.TestCase):
+    """The `raw_yahoo_quote_history` function should query Yahoo's finance tables
+    using YQL and return the historical quote data for a particular stock over
+    a given date range.
+
+    The date range must be a list containing the start and end dates.  The dates
+    may be date objects (fully specified), strings or empty.  If the start date
+    is empty a reasonable default is used.  If the end date is empty the latest
+    date is used.
+
+    """
+    def setUp(self):
+        self.good_code = 'ABC'
+
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
+
     def test_history_good_code(self):
         """raw_yahoo_quote_history should return True given a valid code."""
         ret, quotes = raw_yahoo_quote_history(self.good_code, self.test_dates)
@@ -87,6 +96,24 @@ class RawYahooQuoteTestCase(unittest.TestCase):
 
         for i in range(len(quotes)):
             self.assertEqual(quotes[i]['Date'], self.test_date_range[i])
+
+
+class RawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
+    """The `raw_yahoo_csv_quote_history` function should query Yahoo's finance CSV
+    API and return the historical quote data for a particular stock over a given
+    date range.
+
+    The date range must be a list containing the start and end dates.  The dates
+    may be date objects (fully specified), strings or empty.  If the start date
+    is empty a reasonable default is used.  If the end date is empty the latest
+    date is used.
+
+    """
+    def setUp(self):
+        self.good_code = 'ABC'
+
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
 
     def test_csv_history_good_code(self):
         """raw_yahoo_csv_quote_history should return True given a valid code."""
