@@ -381,7 +381,6 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
             'Close': ('Close', Decimal), 'Adj_Close': ('Adj Close', Decimal),
             'Volume': ('Volume', Decimal),
         }
-        self.csv_quote_history_fields.update({'Adj Close': ('Adj Close', Decimal)})
 
         self.csv_quote_history_parsed = [
             {
