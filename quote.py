@@ -350,93 +350,128 @@ class YahooQuoteHistory(QuoteBase):
         return output
 
 
-def raw_yahoo_csv_quote_history(code, date_range):
-    """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
-
-    Given the code of the stock and a list containing the start and end dates of
-    the data.
+class YahooCSVQuoteHistory(QuoteBase):
+    """Represents a set of historical quotes that are obtained via the Yahoo
+    CSV API.
 
     """
-    # Validate dates first
-    ret, date_range = validate_date_range(date_range)
+    def _raw_quote(self, code, date_range):
+        """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
 
-    if not ret:
-        # raise exception or just quit - validate_date_range will raise an exceptions
-        raise Exception('Date range is no valid')
+        Given the code of the stock and a list containing the start and end dates of
+        the data.
 
-    start_date = date_range[0]
-    end_date = date_range[1]
+        """
+        # Validate dates first
+        ret, date_range = validate_date_range(date_range)
 
-    # Only interested in Australian equities at the moment
-    exchange = 'AX'
+        if not ret:
+            # raise exception or just quit - validate_date_range will raise an exceptions
+            raise Exception('Date range is no valid')
 
-    quote_url = 'http://ichart.yahoo.com/table.csv' \
-        '?s=%(code)s.%(exchange)s' \
-        '&a=%(start_month)s&b=%(start_day)s&c=%(start_year)s' \
-        '&d=%(end_month)s&e=%(end_day)s&f=%(end_year)s' \
-        '&g=%(period)s' \
-        '&ignore=.csv' \
-        % {
-            'code': code, 'exchange': exchange,
-            'start_month': start_date.month - 1, 'start_day': start_date.day,
-            'start_year': start_date.year, 'end_month': end_date.month - 1,
-            'end_day': end_date.day, 'end_year': end_date.year,
-            'period': 'd',
+        start_date = date_range[0]
+        end_date = date_range[1]
+
+        # Only interested in Australian equities at the moment
+        exchange = 'AX'
+
+        quote_url = 'http://ichart.yahoo.com/table.csv' \
+            '?s=%(code)s.%(exchange)s' \
+            '&a=%(start_month)s&b=%(start_day)s&c=%(start_year)s' \
+            '&d=%(end_month)s&e=%(end_day)s&f=%(end_year)s' \
+            '&g=%(period)s' \
+            '&ignore=.csv' \
+            % {
+                'code': code, 'exchange': exchange,
+                'start_month': start_date.month - 1, 'start_day': start_date.day,
+                'start_year': start_date.year, 'end_month': end_date.month - 1,
+                'end_day': end_date.day, 'end_year': end_date.year,
+                'period': 'd',
+            }
+
+        response = urllib2.urlopen(quote_url)
+
+        quote = response.read()
+
+        return True, quote
+
+    def get_quote_fields(self, fields):
+        """Returns field names and types from given Yahoo YQL field names.
+
+        Each field needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        known_fields = {
+            'Date': {'name': 'Date', 'type': parse_date, },
+            'Open': {'name': 'Open', 'type': Decimal, },
+            'High': {'name': 'High', 'type': Decimal, },
+            'Low': {'name': 'Low', 'type': Decimal, },
+            'Close': {'name': 'Close', 'type': Decimal, },
+            'Volume': {'name': 'Volume', 'type': Decimal, },
         }
 
-    response = urllib2.urlopen(quote_url)
+        output = {}
 
-    quote = response.read()
+        for field in fields:
+            if not known_fields.has_key(field):
+                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
 
-    return True, quote
+            # Find field in our known fields
+            data = known_fields[field]
 
-def parse_yahoo_csv_quote_history(raw_quote, field_dict):
-    """Parse the raw data from a Yahoo finance CSV historical quote into a
-    dictionary of useful data.
+            # Add the field name and type to the output
+            output[field] = (data['name'], data['type'])
 
-    Given a dictionary containing the fields to include in the result.
+        return output
 
-    """
-    if field_dict == {} or field_dict is None:
-        raise Exception('Quote cannot be parsed without output field dictionary.')
+    def parse_quote(self, raw_quote, field_dict):
+        """Parse the raw data from a Yahoo finance CSV historical quote into a
+        dictionary of useful data.
 
-    # Use the CSV module to parse the quote
-    reader = csv.reader(raw_quote.split('\n'))
+        Given a dictionary containing the fields to include in the result.
 
-    # Read the raw data
-    raw_data = [row for row in reader]
+        """
+        if field_dict == {} or field_dict is None:
+            raise Exception('Quote cannot be parsed without output field dictionary.')
 
-    # Remove any empty rows
-    raw_data.remove([])
+        # Use the CSV module to parse the quote
+        reader = csv.reader(raw_quote.split('\n'))
 
-    # Remove the headers
-    headers = raw_data.pop(0)
+        # Read the raw data
+        raw_data = [row for row in reader]
 
-    # Trade data is the remaining CSV data
-    data = raw_data
+        # Remove any empty rows
+        raw_data.remove([])
 
-    output = []
+        # Remove the headers
+        headers = raw_data.pop(0)
 
-    # Populate the output list with data dictionaries
-    for i in range(len(data)):
-        # Create dictionary for this data
-        dic = {}
+        # Trade data is the remaining CSV data
+        data = raw_data
 
-        for j in range(len(headers)):
-            # Ignore fields in data that are not in requested field dict
-            if not field_dict.has_key(headers[j]):
-                continue
+        output = []
 
-            # Lookup data name and data type
-            data_name, data_type = field_dict[headers[j]]
+        # Populate the output list with data dictionaries
+        for i in range(len(data)):
+            # Create dictionary for this data
+            dic = {}
 
-            # Apply the datatype
-            dic[data_name] = data_type(data[i][j])
+            for j in range(len(headers)):
+                # Ignore fields in data that are not in requested field dict
+                if not field_dict.has_key(headers[j]):
+                    continue
 
-        # Add the data dictionary to the output
-        output.append(dic)
+                # Lookup data name and data type
+                data_name, data_type = field_dict[headers[j]]
 
-    return output
+                # Apply the datatype
+                dic[data_name] = data_type(data[i][j])
+
+            # Add the data dictionary to the output
+            output.append(dic)
+
+        return output
 
 def validate_date_range(date_range):
     """Validate a date range.

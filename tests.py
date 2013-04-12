@@ -99,7 +99,7 @@ class RawYahooQuoteHistoryTestCase(unittest.TestCase):
 
 
 class RawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
-    """The `raw_yahoo_csv_quote_history` function should query Yahoo's finance CSV
+    """The `YahooCSVQuoteHistory`.`_raw_quote` function should query Yahoo's finance CSV
     API and return the historical quote data for a particular stock over a given
     date range.
 
@@ -116,8 +116,8 @@ class RawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
 
     def test_csv_history_good_code(self):
-        """raw_yahoo_csv_quote_history should return True given a valid code."""
-        ret, quotes = raw_yahoo_csv_quote_history(self.good_code, self.test_dates)
+        """_raw_quote should return True given a valid code."""
+        ret, quotes = YahooCSVQuoteHistory()._raw_quote(self.good_code, self.test_dates)
         self.assertTrue(ret)
 
         # This would ideally be done in another function
@@ -469,7 +469,7 @@ class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
 
 
 class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
-    """The `parse_yahoo_csv_quote_history` function should correctly parse the
+    """The `YahooCSVQuoteHistory`.`parse_quote` function should correctly parse the
     information from a Yahoo CSV stock history.
 
     """
@@ -535,14 +535,14 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
     def test_parse_yahoo_csv_quote_history(self):
         """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
         self.assertEqual(
-            parse_yahoo_csv_quote_history(self.csv_quote_history, self.csv_quote_history_fields),
+            YahooCSVQuoteHistory().parse_quote(self.csv_quote_history, self.csv_quote_history_fields),
             self.csv_quote_history_parsed
         )
 
     def test_parse_yahoo_csv_quote_history_partial(self):
         """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
         self.assertEqual(
-            parse_yahoo_csv_quote_history(self.csv_quote_history, self.csv_quote_history_partial_fields),
+            YahooCSVQuoteHistory().parse_quote(self.csv_quote_history, self.csv_quote_history_partial_fields),
             self.csv_quote_history_partial_parsed
         )
 
@@ -550,7 +550,7 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
         """parse_yahoo_csv_quote_history should raise Exception with no specified fields."""
         self.assertRaises(
             Exception,
-            parse_yahoo_csv_quote_history,
+            YahooCSVQuoteHistory().parse_quote,
             self.csv_quote_history, self.csv_quote_history_no_fields
         )
 
