@@ -133,7 +133,7 @@ class ParseYahooCSVQuoteSymbolsTestCase(unittest.TestCase):
 class GetYahooQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `get_yahoo_quote_fields` function.
 
-    The `get_yahoo_quote_fields` function should return a tuple of two-tuples
+    The `get_yahoo_quote_fields` function should return a dictionary of two-tuples
     that contain the output field names and data type given the quote field names.
 
     """
@@ -141,9 +141,11 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
         self.test_data = [
             [
                 ('Symbol', 'LastTradePriceOnly', 'Volume'),
-                (
-                    ('Code', str), ('Close', Decimal), ('Volume', Decimal),
-                ),
+                {
+                    'Symbol': ('Code', str),
+                    'LastTradePriceOnly': ('Close', Decimal),
+                    'Volume': ('Volume', Decimal),
+                },
             ],
         ]
 
@@ -152,14 +154,14 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
         ]
 
     def test_get_yahoo_quote_fields(self):
-        """get_yahoo_quote_fields should return tuple of tuples of field names"""
-        [self.assertEqual(get_yahoo_quote_fields(quote_tuple), field_tuples)
-            for quote_tuple, field_tuples in self.test_data]
+        """get_yahoo_quote_fields should return dictionary of tuples of field names"""
+        [self.assertEqual(get_yahoo_quote_fields(field_tuple), field_dict)
+            for field_tuple, field_dict in self.test_data]
 
     def test_unknown_fields(self):
-        """get_yahoo_quote_fields should raise Exception if the symbol if unknown."""
-        [self.assertRaises(Exception, get_yahoo_quote_fields, symbol_tuple)
-            for symbol_tuple in self.test_unknown_fields]
+        """get_yahoo_quote_fields should raise Exception if the field is unknown."""
+        [self.assertRaises(Exception, get_yahoo_quote_fields, field_tuple)
+            for field_tuple in self.test_unknown_fields]
 
 
 class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
@@ -206,7 +208,7 @@ class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
 class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
     """Test Case for the `get_yahoo_quote_history_fields` function.
 
-    The `get_yahoo_quote_history_fields` function should return a tuple of
+    The `get_yahoo_quote_history_fields` function should return a dictionary of
     two-tuples that contain the output field names and data type given the quote
     field names.
 
@@ -215,10 +217,11 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
         self.test_data = [
             [
                 ('Date', 'Open', 'High', 'Low', 'Close', 'Volume'),
-                (
-                    ('Date', parse_date), ('Open', Decimal), ('High', Decimal),
-                    ('Low', Decimal), ('Close', Decimal), ('Volume', Decimal),
-                ),
+                {
+                    'Date': ('Date', parse_date), 'Open': ('Open', Decimal),
+                    'High': ('High', Decimal), 'Low': ('Low', Decimal),
+                    'Close': ('Close', Decimal), 'Volume': ('Volume', Decimal),
+                },
             ],
         ]
 
@@ -227,14 +230,14 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
         ]
 
     def test_get_yahoo_quote_history_fields(self):
-        """get_yahoo_quote_history_fields should return tuple of tuples of field names"""
-        [self.assertEqual(get_yahoo_quote_history_fields(quote_tuple), field_tuples)
-            for quote_tuple, field_tuples in self.test_data]
+        """get_yahoo_quote_history_fields should return dictionary of tuples of field names"""
+        [self.assertEqual(get_yahoo_quote_history_fields(field_tuple), field_dict)
+            for field_tuple, field_dict in self.test_data]
 
     def test_unknown_fields(self):
         """get_yahoo_quote_fields should raise Exception if the field is unknown."""
-        [self.assertRaises(Exception, get_yahoo_quote_history_fields, symbol_tuple)
-            for symbol_tuple in self.test_unknown_fields]
+        [self.assertRaises(Exception, get_yahoo_quote_history_fields, field_tuple)
+            for field_tuple in self.test_unknown_fields]
 
 
 class ParseYahooQuoteTestCase(unittest.TestCase):

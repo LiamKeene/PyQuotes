@@ -185,7 +185,7 @@ def parse_yahoo_csv_quote_symbols(symbols):
     return tuple(output)
 
 def get_yahoo_quote_fields(fields):
-    """Returns field names and types from given Yahoo YQL field names.
+    """Returns dictionary of field names and types from given Yahoo YQL field names.
 
     Each field needs it's name and type defined otherwise an Exception is
     raised.
@@ -197,7 +197,7 @@ def get_yahoo_quote_fields(fields):
         'Volume': {'name': 'Volume', 'type': Decimal, },
     }
 
-    output = []
+    output = {}
 
     for field in fields:
         if not known_fields.has_key(field):
@@ -207,10 +207,9 @@ def get_yahoo_quote_fields(fields):
         data = known_fields[field]
 
         # Add the field name and type to the output
-        output.append((data['name'], data['type']))
+        output[field] = (data['name'], data['type'])
 
-    # Convert to tuple to stop modifcation of the output
-    return tuple(output)
+    return output
 
 def get_yahoo_csv_quote_fields(symbols):
     """Returns field names and types from given Yahoo CSV symbols.
@@ -260,7 +259,7 @@ def get_yahoo_quote_history_fields(fields):
         'Volume': {'name': 'Volume', 'type': Decimal, },
     }
 
-    output = []
+    output = {}
 
     for field in fields:
         if not known_fields.has_key(field):
@@ -270,10 +269,9 @@ def get_yahoo_quote_history_fields(fields):
         data = known_fields[field]
 
         # Add the field name and type to the output
-        output.append((data['name'], data['type']))
+        output[field] = (data['name'], data['type'])
 
-    # Convert to tuple to stop modifcation of the output
-    return tuple(output)
+    return output
 
 def parse_yahoo_csv_quote(raw_quote, fields):
     """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
