@@ -197,7 +197,7 @@ def get_yahoo_csv_quote_fields(symbols):
         'l1': {'name': 'Close', 'type': Decimal, },
         'n': {'name': 'Name', 'type': str, },
         'o': {'name': 'Open', 'type': Decimal, },
-        's': {'name': 'Symbol', 'type': str, },
+        's': {'name': 'Code', 'type': str, },
         'v': {'name': 'Volume', 'type': Decimal, },
         'x': {'name': 'Exchange', 'type': str, },
     }

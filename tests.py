@@ -150,13 +150,13 @@ class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
             [
                 ('n', 's', 'x', 'l1'),
                 (
-                    ('Name', str), ('Symbol', str), ('Exchange', str), ('Close', Decimal),
+                    ('Name', str), ('Code', str), ('Exchange', str), ('Close', Decimal),
                 ),
             ],
             [
                 ('s', 'o', 'h', 'g', 'l1', 'v'),
                 (
-                    ('Symbol', str), ('Open', Decimal), ('High', Decimal),
+                    ('Code', str), ('Open', Decimal), ('High', Decimal),
                     ('Low', Decimal), ('Close', Decimal), ('Volume', Decimal),
                 ),
             ]
