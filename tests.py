@@ -203,6 +203,40 @@ class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
             for symbol_list in self.test_unknown_symbols]
 
 
+class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
+    """Test Case for the `get_yahoo_quote_history_fields` function.
+
+    The `get_yahoo_quote_history_fields` function should return a tuple of
+    two-tuples that contain the output field names and data type given the quote
+    field names.
+
+    """
+    def setUp(self):
+        self.test_data = [
+            [
+                ('Date', 'Open', 'High', 'Low', 'Close', 'Volume'),
+                (
+                    ('Date', parse_date), ('Open', Decimal), ('High', Decimal),
+                    ('Low', Decimal), ('Close', Decimal), ('Volume', Decimal),
+                ),
+            ],
+        ]
+
+        self.test_unknown_fields = [
+            ('RandomField'),
+        ]
+
+    def test_get_yahoo_quote_history_fields(self):
+        """get_yahoo_quote_history_fields should return tuple of tuples of field names"""
+        [self.assertEqual(get_yahoo_quote_history_fields(quote_tuple), field_tuples)
+            for quote_tuple, field_tuples in self.test_data]
+
+    def test_unknown_fields(self):
+        """get_yahoo_quote_fields should raise Exception if the field is unknown."""
+        [self.assertRaises(Exception, get_yahoo_quote_history_fields, symbol_tuple)
+            for symbol_tuple in self.test_unknown_fields]
+
+
 class ParseYahooQuoteTestCase(unittest.TestCase):
     """Test Case for the `parse_yahoo_csv_quote` and `parse_yahoo_csv_quote_history` functions.
 

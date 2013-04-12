@@ -244,6 +244,37 @@ def get_yahoo_csv_quote_fields(symbols):
 
     return tuple(output)
 
+def get_yahoo_quote_history_fields(fields):
+    """Returns field names and types from given Yahoo YQL field names.
+
+    Each field needs it's name and type defined otherwise an Exception is
+    raised.
+
+    """
+    known_fields = {
+        'Date': {'name': 'Date', 'type': parse_date, },
+        'Open': {'name': 'Open', 'type': Decimal, },
+        'High': {'name': 'High', 'type': Decimal, },
+        'Low': {'name': 'Low', 'type': Decimal, },
+        'Close': {'name': 'Close', 'type': Decimal, },
+        'Volume': {'name': 'Volume', 'type': Decimal, },
+    }
+
+    output = []
+
+    for field in fields:
+        if not known_fields.has_key(field):
+            raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+
+        # Find field in our known fields
+        data = known_fields[field]
+
+        # Add the field name and type to the output
+        output.append((data['name'], data['type']))
+
+    # Convert to tuple to stop modifcation of the output
+    return tuple(output)
+
 def parse_yahoo_csv_quote(raw_quote, fields):
     """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
     useful data.
