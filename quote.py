@@ -11,6 +11,25 @@ DATE_RE = re.compile(
 )
 LOOKBACK_DAYS = 60
 
+
+class QuoteBase(object):
+    """Abstract quote model that defines standard attributes and methods for
+    different models.
+
+    """
+    def _raw_quote(self):
+        """Method to fetch a raw unparsed quote from a provider."""
+        raise NotImplementedError('This method must be defined by subclass.')
+
+    def get_quote_fields(self):
+        """Method to get the field names and data types for this quote."""
+        raise NotImplementedError('This method must be defined by subclass.')
+
+    def parse_quote(self):
+        """Method to parse a raw quote from a provider into a standard format."""
+        raise NotImplementedError('This method must be defined by subclass.')
+
+
 def raw_yahoo_quote(code, query_columns='*'):
     """Get a quote from the Yahoo YQL finance tables and return the result.
 
