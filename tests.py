@@ -304,34 +304,17 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             }
         ]
 
+        # The YQL historical fields are a dictionary of the field name as the key
+        # and the desired output name and type as the value
+        self.quote_history_fields = {
+            'Date': ('Date', parse_date), 'Open': ('Open', Decimal),
+            'High': ('High', Decimal), 'Low': ('Low', Decimal),
+            'Close': ('Close', Decimal), 'Adj_Close': ('Adj Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+
+        # The parsed YQL historical field
         self.quote_history_parsed = [
-            {
-                'Date': date(2013, 4, 12),
-                'Open': Decimal('3.36'), 'High': Decimal('3.38'),
-                'Low': Decimal('3.31'), 'Close': Decimal('3.33'),
-                'Volume': Decimal('1351200'), 'Adj_Close': Decimal('3.33'),
-            },
-            {
-                'Date': date(2013, 4, 11),
-                'Open': Decimal('3.39'), 'High': Decimal('3.41'),
-                'Low': Decimal('3.33'), 'Close': Decimal('3.34'),
-                'Volume': Decimal('1225300'), 'Adj_Close': Decimal('3.34'),
-            },
-            {
-                'Date': date(2013, 4, 10),
-                'Open': Decimal('3.39'), 'High': Decimal('3.41'),
-                'Low': Decimal('3.38'), 'Close': Decimal('3.40'),
-                'Volume': Decimal('2076700'), 'Adj_Close': Decimal('3.40'),
-            },
-        ]
-
-        # The CSV historical quote has defined headers (the first row of CSV data)
-        self.csv_quote_history = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
-            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
-            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
-            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
-
-        self.csv_quote_history_parsed = [
             {
                 'Date': date(2013, 4, 12),
                 'Open': Decimal('3.36'), 'High': Decimal('3.38'),
@@ -352,6 +335,18 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             },
         ]
 
+        # The CSV historical quote has defined headers (the first row of CSV data)
+        self.csv_quote_history = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
+            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
+            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
+            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
+
+        # The CSV quote fields are slightly different(!)
+        self.csv_quote_history_fields = self.quote_history_fields
+        self.csv_quote_history_fields.update({'Adj Close': ('Adj Close', Decimal)})
+
+        self.csv_quote_history_parsed = self.quote_history_parsed
+
     def test_parse_yahoo_quote(self):
         """parse_yahoo_quote should be able to parse quote."""
         quote = parse_yahoo_quote(self.quote, self.quote_fields)
@@ -371,14 +366,14 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
     def test_parse_yahoo_quote_history(self):
         """parse_yahoo_quote_history should be able to parse historical quotes."""
         self.assertEqual(
-            parse_yahoo_quote_history(self.quote_history),
+            parse_yahoo_quote_history(self.quote_history, self.quote_history_fields),
             self.quote_history_parsed
         )
 
     def test_parse_yahoo_csv_quote_history(self):
         """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
         self.assertEqual(
-            parse_yahoo_csv_quote_history(self.csv_quote_history),
+            parse_yahoo_csv_quote_history(self.csv_quote_history, self.csv_quote_history_fields),
             self.csv_quote_history_parsed
         )
 

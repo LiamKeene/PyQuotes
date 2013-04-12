@@ -305,16 +305,11 @@ def parse_yahoo_csv_quote(raw_quote, fields):
 
     return output
 
-def parse_yahoo_quote_history(raw_quote):
+def parse_yahoo_quote_history(raw_quote, field_dict):
     """Parse the raw data from a Yahoo finance YQL historical quote into a
     dictionary of useful data.
 
     """
-    # Data types for the historical quote fields
-    data_types = {
-        'Date': parse_date, 'Open': Decimal, 'High': Decimal, 'Low': Decimal,
-        'Close': Decimal, 'Volume': Decimal, 'Adj_Close': Decimal,
-    }
     output = []
 
     # Populate the output list with data dictionaries
@@ -327,28 +322,22 @@ def parse_yahoo_quote_history(raw_quote):
             # YQL historical quotes have superfluous 'date' field
             if key == 'date':
                continue
-            # Lookup data type
-            data_type = data_types[key]
+            # Lookup data name and data type
+            data_name, data_type = field_dict[key]
 
             # Apply the datatype
-            dic[key] = data_type(value)
+            dic[data_name] = data_type(value)
 
         # Add the data dictionary to the output
         output.append(dic)
 
     return output
 
-def parse_yahoo_csv_quote_history(raw_quote):
+def parse_yahoo_csv_quote_history(raw_quote, field_dict):
     """Parse the raw data from a Yahoo finance CSV historical quote into a
     dictionary of useful data.
 
     """
-    # Data types for the historical quote fields
-    data_types = {
-        'Date': parse_date, 'Open': Decimal, 'High': Decimal, 'Low': Decimal,
-        'Close': Decimal, 'Volume': Decimal, 'Adj Close': Decimal,
-    }
-
     # Use the CSV module to parse the quote
     reader = csv.reader(raw_quote.split('\n'))
 
@@ -372,11 +361,11 @@ def parse_yahoo_csv_quote_history(raw_quote):
         dic = {}
 
         for j in range(len(headers)):
-             # Lookup data type
-            data_type = data_types[headers[j]]
+            # Lookup data name and data type
+            data_name, data_type = field_dict[headers[j]]
 
             # Apply the datatype
-            dic[headers[j]] = data_type(data[i][j])
+            dic[data_name] = data_type(data[i][j])
 
         # Add the data dictionary to the output
         output.append(dic)
