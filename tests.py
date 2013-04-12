@@ -9,6 +9,7 @@ from quote import raw_yahoo_quote_history, raw_yahoo_csv_quote_history
 from quote import parse_yahoo_csv_quote_symbols, get_yahoo_csv_quote_fields
 from quote import parse_yahoo_csv_quote, parse_yahoo_csv_quote_history
 from quote import date_range_generator, validate_date_range, LOOKBACK_DAYS
+from quote import parse_date
 
 
 class RawYahooQuoteTestCase(unittest.TestCase):
@@ -397,6 +398,31 @@ class DateRangeGeneratorTestCase(unittest.TestCase):
         """date_range_generator should raise an Exception if the inputs are not dates."""
         self.assertRaises(Exception, date_range_generator,
             (self.bad_date_wrong_types[0], self.bad_date_wrong_types[1]))
+
+
+class ParseDateTestCase(unittest.TestCase):
+    """Test Case for the `parse_date` function.
+
+    The `parse_date` function will take a date string and return a date object.
+
+    """
+    def setUp(self):
+        self.valid_date = date(2013, 4, 10)
+        self.good_date = '2013-04-10'
+        self.bad_date = '2013-13-10'
+        self.bad_date_format = '10-04-2013'
+
+    def test_parse_good_date(self):
+        """parse_date should return date object given a proper date string."""
+        self.assertEqual(parse_date(self.good_date), self.valid_date)
+
+    def test_parse_bad_date(self):
+        """parse_date should raise ValueError if given a proper but impossible date."""
+        self.assertRaises(ValueError, parse_date, self.bad_date)
+
+    def test_parse_bad_date_format(self):
+        """Parse_date should return None if given an improper date string."""
+        self.assertEqual(parse_date(self.bad_date_format), None)
 
 
 if __name__ == '__main__':

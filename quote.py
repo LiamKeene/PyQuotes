@@ -1,10 +1,14 @@
 import csv
+import re
 import urllib2
 import yql
 
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+DATE_RE = re.compile(
+    r'(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})$'
+)
 LOOKBACK_DAYS = 60
 
 def raw_yahoo_quote(code, query_columns='*'):
@@ -341,3 +345,13 @@ def date_range_generator(start_date, end_date):
         start_date = start_date + timedelta(days=1)
         if start_date > end_date:
             break
+
+def parse_date(value):
+    """Parses a string and returns a datetime.date object.
+
+    From django.utils.parse_date.
+
+    """
+    match = DATE_RE.match(value)
+    if match:
+        return date(**dict((k, int(v)) for k, v in match.groupdict().items()))
