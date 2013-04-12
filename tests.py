@@ -259,9 +259,16 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             'LastTradePriceOnly': ('Close', Decimal),
             'Volume': ('Volume', Decimal),
         }
+        self.quote_partial_fields = {
+            'Symbol': ('Code', str),
+        }
+        self.quote_no_fields = {}
 
         self.quote_parsed = {
             'Code': 'ABC.AX', 'Close': Decimal('3.330'), 'Volume': Decimal('1351200'),
+        }
+        self.quote_partial_parsed = {
+            'Code': 'ABC.AX',
         }
 
     def test_parse_yahoo_quote(self):
@@ -271,6 +278,21 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
         for key, value in self.quote_parsed.items():
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], value)
+
+    def test_parse_yahoo_quote_partial(self):
+        """parse_yahoo_quote should be able to parse quote."""
+        self.assertEqual(
+            parse_yahoo_quote(self.quote, self.quote_partial_fields),
+            self.quote_partial_parsed
+        )
+
+    def test_parse_yahoo_quote_no_fields(self):
+        """parse_yahoo_quote should raise Exception with no specified fields."""
+        self.assertRaises(
+            Exception,
+            parse_yahoo_quote,
+            self.quote, self.quote_no_fields
+        )
 
 
 class ParseYahooCSVQuoteTestCase(unittest.TestCase):
@@ -284,9 +306,14 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
 
         # Tuple of two-tuples containing the requested fields and data types
         self.csv_quote_fields = (('Code', str), ('Close', Decimal), ('Volume', Decimal), )
+        self.csv_quote_partial_fields = (('Code', str), )
+        self.csv_quote_no_fields = ()
 
         self.csv_quote_parsed = {
             'Code': 'ABC.AX', 'Close': Decimal('3.330'), 'Volume': Decimal('1351200'),
+        }
+        self.csv_quote_partial_parsed = {
+            'Code': 'ABC.AX',
         }
 
     def test_parse_yahoo_csv_quote(self):
@@ -296,6 +323,21 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
         for key, value in self.csv_quote_parsed.items():
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], value)
+
+    def test_parse_yahoo_csv_quote_partial(self):
+        """parse_yahoo_csv_quote should be able to parse quote."""
+        self.assertEqual(
+            parse_yahoo_csv_quote(self.csv_quote, self.csv_quote_partial_fields),
+            self.csv_quote_partial_parsed
+        )
+
+    def test_parse_yahoo_csv_quote_no_fields(self):
+        """parse_yahoo_csv_quote should raise Exception with no specified fields."""
+        self.assertRaises(
+            Exception,
+            parse_yahoo_csv_quote,
+            self.csv_quote, self.csv_quote_no_fields
+        )
 
 
 class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
@@ -332,6 +374,14 @@ class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
             'Volume': ('Volume', Decimal),
         }
 
+        # Only parse parts of the quote
+        self.quote_history_partial_fields = {
+            'Date': ('Date', parse_date), 'Close': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+        # Don't ask to parse anything - raises Exception
+        self.quote_history_no_fields = {}
+
         # The parsed YQL historical field
         self.quote_history_parsed = [
             {
@@ -353,12 +403,41 @@ class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
                 'Volume': Decimal('2076700'), 'Adj Close': Decimal('3.40'),
             },
         ]
+        self.quote_history_partial_parsed = [
+            {
+                'Date': date(2013, 4, 12), 'Close': Decimal('3.33'),
+                'Volume': Decimal('1351200'),
+            },
+            {
+                'Date': date(2013, 4, 11), 'Close': Decimal('3.34'),
+                'Volume': Decimal('1225300'),
+            },
+            {
+                'Date': date(2013, 4, 10), 'Close': Decimal('3.40'),
+                'Volume': Decimal('2076700'),
+            },
+        ]
 
     def test_parse_yahoo_quote_history(self):
         """parse_yahoo_quote_history should be able to parse historical quotes."""
         self.assertEqual(
             parse_yahoo_quote_history(self.quote_history, self.quote_history_fields),
             self.quote_history_parsed
+        )
+
+    def test_parse_yahoo_quote_history_partial(self):
+        """parse_yahoo_quote_history should be able to parse historical quotes."""
+        self.assertEqual(
+            parse_yahoo_quote_history(self.quote_history, self.quote_history_partial_fields),
+            self.quote_history_partial_parsed
+        )
+
+    def test_parse_yahoo_quote_history_no_fields(self):
+        """parse_yahoo_quote_history should raise Exception with no specified fields."""
+        self.assertRaises(
+            Exception,
+            parse_yahoo_quote_history,
+            self.quote_history, self.quote_history_no_fields
         )
 
 
@@ -374,13 +453,20 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
             '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
             '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
 
-        # The CSV quote fields are slightly different(!)
+        # The CSV quote fields
         self.csv_quote_history_fields = {
             'Date': ('Date', parse_date), 'Open': ('Open', Decimal),
             'High': ('High', Decimal), 'Low': ('Low', Decimal),
-            'Close': ('Close', Decimal), 'Adj_Close': ('Adj Close', Decimal),
+            'Close': ('Close', Decimal), 'Adj Close': ('Adj Close', Decimal),
             'Volume': ('Volume', Decimal),
         }
+        # A partial set of fields to return
+        self.csv_quote_history_partial_fields = {
+            'Date': ('Date', parse_date), 'Close': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+        # Don't ask to parse anything - raises Exception
+        self.csv_quote_history_no_fields = {}
 
         self.csv_quote_history_parsed = [
             {
@@ -403,11 +489,42 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
             },
         ]
 
+        self.csv_quote_history_partial_parsed = [
+            {
+                'Date': date(2013, 4, 12), 'Close': Decimal('3.33'),
+                'Volume': Decimal('1351200'),
+            },
+            {
+                'Date': date(2013, 4, 11), 'Close': Decimal('3.34'),
+                'Volume': Decimal('1225300'),
+            },
+            {
+                'Date': date(2013, 4, 10), 'Close': Decimal('3.40'),
+                'Volume': Decimal('2076700'),
+            },
+        ]
+
+
     def test_parse_yahoo_csv_quote_history(self):
         """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
         self.assertEqual(
             parse_yahoo_csv_quote_history(self.csv_quote_history, self.csv_quote_history_fields),
             self.csv_quote_history_parsed
+        )
+
+    def test_parse_yahoo_csv_quote_history_partial(self):
+        """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
+        self.assertEqual(
+            parse_yahoo_csv_quote_history(self.csv_quote_history, self.csv_quote_history_partial_fields),
+            self.csv_quote_history_partial_parsed
+        )
+
+    def test_parse_yahoo_csv_quote_history_no_fields(self):
+        """parse_yahoo_csv_quote_history should raise Exception with no specified fields."""
+        self.assertRaises(
+            Exception,
+            parse_yahoo_csv_quote_history,
+            self.csv_quote_history, self.csv_quote_history_no_fields
         )
 
 

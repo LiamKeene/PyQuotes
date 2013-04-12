@@ -277,10 +277,18 @@ def parse_yahoo_quote(raw_quote, field_dict):
     """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
     useful data.
 
+    Given a dictionary containing the fields to include in the result.
+
     """
+    if field_dict == {} or field_dict is None:
+        raise Exception('Quote cannot be parsed without output field dictionary.')
+
     output = {}
 
     for key, value in raw_quote.items():
+        # Ignore fields in data that are not in requested field dict
+        if not field_dict.has_key(key):
+            continue
         field_name, field_type = field_dict[key]
         output[field_name] = field_type(value)
 
@@ -290,7 +298,12 @@ def parse_yahoo_csv_quote(raw_quote, fields):
     """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
     useful data.
 
+    Given a dictionary containing the fields to include in the result.
+
     """
+    if fields == () or fields is None:
+        raise Exception('Quote cannot be parsed without output field tuple.')
+
     # Use the CSV module to parse the quote
     reader = csv.reader(raw_quote.split(','))
 
@@ -309,7 +322,12 @@ def parse_yahoo_quote_history(raw_quote, field_dict):
     """Parse the raw data from a Yahoo finance YQL historical quote into a
     dictionary of useful data.
 
+    Given a dictionary containing the fields to include in the result.
+
     """
+    if field_dict == {} or field_dict is None:
+        raise Exception('Quote cannot be parsed without output field dictionary.')
+
     output = []
 
     # Populate the output list with data dictionaries
@@ -319,6 +337,9 @@ def parse_yahoo_quote_history(raw_quote, field_dict):
         dic = {}
 
         for key, value in data.items():
+            # Ignore fields in data that are not in requested field dict
+            if not field_dict.has_key(key):
+                continue
             # YQL historical quotes have superfluous 'date' field
             if key == 'date':
                continue
@@ -337,7 +358,12 @@ def parse_yahoo_csv_quote_history(raw_quote, field_dict):
     """Parse the raw data from a Yahoo finance CSV historical quote into a
     dictionary of useful data.
 
+    Given a dictionary containing the fields to include in the result.
+
     """
+    if field_dict == {} or field_dict is None:
+        raise Exception('Quote cannot be parsed without output field dictionary.')
+
     # Use the CSV module to parse the quote
     reader = csv.reader(raw_quote.split('\n'))
 
@@ -361,6 +387,10 @@ def parse_yahoo_csv_quote_history(raw_quote, field_dict):
         dic = {}
 
         for j in range(len(headers)):
+            # Ignore fields in data that are not in requested field dict
+            if not field_dict.has_key(headers[j]):
+                continue
+
             # Lookup data name and data type
             data_name, data_type = field_dict[headers[j]]
 
