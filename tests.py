@@ -200,13 +200,20 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
             '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
             '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
-        self.parsed_headers = [
-            'Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Adj Close'
-        ]
+
         self.parsed_history = [
-            ['2013-04-12', '3.36', '3.38', '3.31', '3.33', '1351200', '3.33'],
-            ['2013-04-11', '3.39', '3.41', '3.33', '3.34', '1225300', '3.34'],
-            ['2013-04-10', '3.39', '3.41', '3.38', '3.40', '2076700', '3.40'],
+            {
+                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38', 'Low': '3.31',
+                'Close': '3.33', 'Volume': '1351200', 'Adj Close': '3.33',
+            },
+            {
+                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41', 'Low': '3.33',
+                'Close': '3.34', 'Volume': '1225300', 'Adj Close': '3.34',
+            },
+            {
+                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41', 'Low': '3.38',
+                'Close': '3.40', 'Volume': '2076700', 'Adj Close': '3.40',
+            },
         ]
 
     def test_parse_yahoo_csv_quote_single(self):
@@ -214,16 +221,12 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
         quote = parse_yahoo_csv_quote(self.quote_single, self.quote_fields)
 
         for key, value in self.parsed_single.items():
-
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], self.parsed_single[key])
 
     def test_parse_yahoo_csv_quote_history(self):
         """parse_yahoo_csv_quote should be able to parse good historical quotes."""
-        headers, data = parse_yahoo_csv_history(self.quote_history)
-
-        self.assertEqual(headers, self.parsed_headers)
-        self.assertEqual(data, self.parsed_history)
+        self.assertEqual(parse_yahoo_csv_history(self.quote_history), self.parsed_history)
 
 
 class ValidateDateRangeTestCase(unittest.TestCase):

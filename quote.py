@@ -251,7 +251,18 @@ def parse_yahoo_csv_history(raw_quote):
     # Trade data is the remaining CSV data
     data = raw_data
 
-    return headers, data
+    output = []
+
+    # Populate the output list with data dictionaries
+    for i in range(len(data)):
+        # Create dictionary for this data
+        dic = {}
+        for j in range(len(headers)):
+            dic[headers[j]] = data[i][j]
+
+        output.append(dic)
+
+    return output
 
 def validate_date_range(date_range):
     """Validate a date range.
