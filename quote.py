@@ -30,43 +30,96 @@ class QuoteBase(object):
         raise NotImplementedError('This method must be defined by subclass.')
 
 
-def raw_yahoo_quote(code, query_columns='*'):
-    """Get a quote from the Yahoo YQL finance tables and return the result.
-
-    Given the code of the stock and an optional list of columns of data to get
-    in the quote.
+class YahooQuote(QuoteBase):
+    """Represents a quote that is obtained via the Yahoo Finance community table
+    using the YQL library.
 
     """
-    # Only interested in Australian equities at the moment
-    exchange = 'AX'
+    def _raw_quote(self, code, query_columns='*'):
+        """Get a quote from the Yahoo YQL finance tables and return the result.
 
-    # Error column name - save typing
-    error_column = 'ErrorIndicationreturnedforsymbolchangedinvalid'
+        Given the code of the stock and an optional list of columns of data to get
+        in the quote.
 
-    # Create query object - must set the environment for community tables
-    y = yql.Public()
-    env = 'http://www.datatables.org/alltables.env'
+        """
+        # Only interested in Australian equities at the moment
+        exchange = 'AX'
 
-    # Ensure the error column is included and then join as a comma separated string
-    if not query_columns == '*' and not error_column in query_columns:
-        query_columns.append(error_column)
-    columns = ','.join(query_columns)
+        # Error column name - save typing
+        error_column = 'ErrorIndicationreturnedforsymbolchangedinvalid'
 
-    # Execute the query and get the response
-    query = 'select %(columns)s from yahoo.finance.quotes where symbol = "%(code)s.%(exchange)s"' \
-        % {'code': code, 'exchange': exchange, 'columns': columns, }
-    response = y.execute(query, env=env)
+        # Create query object - must set the environment for community tables
+        y = yql.Public()
+        env = 'http://www.datatables.org/alltables.env'
 
-    # Get the quote and the error field
-    quote = response.results['quote']
-    error = quote[error_column]
+        # Ensure the error column in included and then join as a comma separated string
+        if not query_columns == '*' and not error_column in query_columns:
+            query_columns.append(error_column)
+        columns = ','.join(query_columns)
 
-    # If no error return the quote or raise an exception
-    if error is None:
-        # Valid code and quote
-        return True, quote
+        # Execute the query and get the response
+        query = 'select %(columns)s from yahoo.finance.quotes where symbol = "%(code)s.%(exchange)s"' \
+            % {'code': code, 'exchange': exchange, 'columns': columns, }
+        response = y.execute(query, env=env)
 
-    raise Exception(error)
+        # Get the quote and the error field
+        quote = response.results['quote']
+        error = quote[error_column]
+
+        # If no error return the quote or raise an exception
+        if error is None:
+            # Valid code and quote
+            return True, quote
+
+        raise Exception(error)
+
+    def get_quote_fields(self, fields):
+        """Returns dictionary of field names and types from given Yahoo YQL field names.
+
+        Each field needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        known_fields = {
+            'Symbol': {'name': 'Code', 'type': str, },
+            'LastTradePriceOnly': {'name': 'Close', 'type': Decimal, },
+            'Volume': {'name': 'Volume', 'type': Decimal, },
+        }
+
+        output = {}
+
+        for field in fields:
+            if not known_fields.has_key(field):
+                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+
+            # Find field in our known fields
+            data = known_fields[field]
+
+            # Add the field name and type to the output
+            output[field] = (data['name'], data['type'])
+
+        return output
+
+    def parse_quote(self, raw_quote, field_dict):
+        """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
+        useful data.
+
+        Given a dictionary containing the fields to include in the result.
+
+        """
+        if field_dict == {} or field_dict is None:
+            raise Exception('Quote cannot be parsed without output field dictionary.')
+
+        output = {}
+
+        for key, value in raw_quote.items():
+            # Ignore fields in data that are not in requested field dict
+            if not field_dict.has_key(key):
+                continue
+            field_name, field_type = field_dict[key]
+            output[field_name] = field_type(value)
+
+        return output
 
 def raw_yahoo_csv_quote(code, symbols='nsxl1'):
     """Get a quote from the Yahoo Finance CSV API and return the result.
@@ -203,33 +256,6 @@ def parse_yahoo_csv_quote_symbols(symbols):
 
     return tuple(output)
 
-def get_yahoo_quote_fields(fields):
-    """Returns dictionary of field names and types from given Yahoo YQL field names.
-
-    Each field needs it's name and type defined otherwise an Exception is
-    raised.
-
-    """
-    known_fields = {
-        'Symbol': {'name': 'Code', 'type': str, },
-        'LastTradePriceOnly': {'name': 'Close', 'type': Decimal, },
-        'Volume': {'name': 'Volume', 'type': Decimal, },
-    }
-
-    output = {}
-
-    for field in fields:
-        if not known_fields.has_key(field):
-            raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
-
-        # Find field in our known fields
-        data = known_fields[field]
-
-        # Add the field name and type to the output
-        output[field] = (data['name'], data['type'])
-
-    return output
-
 def get_yahoo_csv_quote_fields(symbols):
     """Returns field names and types from given Yahoo CSV symbols.
 
@@ -289,27 +315,6 @@ def get_yahoo_quote_history_fields(fields):
 
         # Add the field name and type to the output
         output[field] = (data['name'], data['type'])
-
-    return output
-
-def parse_yahoo_quote(raw_quote, field_dict):
-    """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
-    useful data.
-
-    Given a dictionary containing the fields to include in the result.
-
-    """
-    if field_dict == {} or field_dict is None:
-        raise Exception('Quote cannot be parsed without output field dictionary.')
-
-    output = {}
-
-    for key, value in raw_quote.items():
-        # Ignore fields in data that are not in requested field dict
-        if not field_dict.has_key(key):
-            continue
-        field_name, field_type = field_dict[key]
-        output[field_name] = field_type(value)
 
     return output
 
