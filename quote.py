@@ -121,30 +121,118 @@ class YahooQuote(QuoteBase):
 
         return output
 
-def raw_yahoo_csv_quote(code, symbols='nsxl1'):
-    """Get a quote from the Yahoo Finance CSV API and return the result.
 
-    Given the code of the stock and an optional list of symbols that correspond
-    to types of data to get in the quote.
+class YahooCSVQuote(QuoteBase):
+    """Represents a quote that is obtained via the Yahoo CSV API.
 
     """
-    if not len(code) == 3:
-        raise Exception('Stock code appears incorrect')
+    def _raw_quote(self, code, symbols='nsxl1'):
+        """Get a quote from the Yahoo Finance CSV API and return the result.
 
-    # Only interested in Australian equities at the moment
-    exchange = 'AX'
+        Given the code of the stock and an optional list of symbols that correspond
+        to types of data to get in the quote.
 
-    quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
-        '?s=%(code)s.%(exchange)s&f=%(symbols)s' \
-        % {
-            'code': code, 'exchange': exchange, 'symbols': symbols,
+        """
+        if not len(code) == 3:
+            raise Exception('Stock code appears incorrect')
+
+        # Only interested in Australian equities at the moment
+        exchange = 'AX'
+
+        quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
+            '?s=%(code)s.%(exchange)s&f=%(symbols)s' \
+            % {
+                'code': code, 'exchange': exchange, 'symbols': symbols,
+            }
+
+        response = urllib2.urlopen(quote_url)
+
+        quote = response.read()
+
+        return True, quote
+
+    def get_quote_fields(self, symbols):
+        """Returns field names and types from given Yahoo CSV symbols.
+
+        Each symbol needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        known_symbols = {
+            'g': {'name': 'Low', 'type': Decimal, },
+            'h': {'name': 'High', 'type': Decimal, },
+            'l1': {'name': 'Close', 'type': Decimal, },
+            'n': {'name': 'Name', 'type': str, },
+            'o': {'name': 'Open', 'type': Decimal, },
+            's': {'name': 'Code', 'type': str, },
+            'v': {'name': 'Volume', 'type': Decimal, },
+            'x': {'name': 'Exchange', 'type': str, },
         }
 
-    response = urllib2.urlopen(quote_url)
+        output = []
 
-    quote = response.read()
+        for symbol in symbols:
+            if not known_symbols.has_key(symbol):
+                raise NotImplementedError('Symbol: %s is not known or unhandled' % (symbol, ))
 
-    return True, quote
+            # Find symbol in our known symbols
+            data = known_symbols[symbol]
+
+            # Add the field name and type to the output
+            output.append((data['name'], data['type']))
+
+        return tuple(output)
+
+    def parse_symbols(self, symbols):
+        """Parse a string of Yahoo CSV symbols and return them as a tuple.
+
+        This is required as the symbols are either single letters or a letter and
+        an integer.
+
+        """
+        # Split symbols into a list
+        symbol_list = list(symbols)
+
+        # Symbol output
+        output = []
+        # Output counter
+        count = 0
+
+        # Find integers in the symbols and attach them to the previous character
+        for i in range(len(symbol_list)):
+            # If the character is a letter append to output
+            if not symbol_list[i].isdigit():
+                output.append(symbol_list[i])
+                count = len(output)
+            else:
+                # Else append the digit to the previous letter
+                output[count-1] = '%s%s' % (symbol_list[i-1], symbol_list[i])
+
+        return tuple(output)
+
+    def parse_quote(self, raw_quote, fields):
+        """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
+        useful data.
+
+        Given a dictionary containing the fields to include in the result.
+
+        """
+        if fields == () or fields is None:
+            raise Exception('Quote cannot be parsed without output field tuple.')
+
+        # Use the CSV module to parse the quote
+        reader = csv.reader(raw_quote.split(','))
+
+        # Read the raw data
+        raw_data = [row[0] for row in reader]
+
+        output = {}
+
+        for i in range(len(fields)):
+            field_name, field_type = fields[i]
+            output[field_name] = field_type(raw_data[i])
+
+        return output
 
 def raw_yahoo_quote_history(code, date_range):
     """Get a list of quotes from the Yahoo YQL finance tables and return the result.
@@ -229,64 +317,9 @@ def raw_yahoo_csv_quote_history(code, date_range):
 
     return True, quote
 
-def parse_yahoo_csv_quote_symbols(symbols):
-    """Parse a string of Yahoo CSV symbols and return them as a tuple.
 
-    This is required as the symbols are either single letters or a letter and
-    an integer.
 
-    """
-    # Split symbols into a list
-    symbol_list = list(symbols)
 
-    # Symbol output
-    output = []
-    # Output counter
-    count = 0
-
-    # Find integers in the symbols and attach them to the previous character
-    for i in range(len(symbol_list)):
-        # If the character is a letter append to output
-        if not symbol_list[i].isdigit():
-            output.append(symbol_list[i])
-            count = len(output)
-        else:
-            # Else append the digit to the previous letter
-            output[count-1] = '%s%s' % (symbol_list[i-1], symbol_list[i])
-
-    return tuple(output)
-
-def get_yahoo_csv_quote_fields(symbols):
-    """Returns field names and types from given Yahoo CSV symbols.
-
-    Each symbol needs it's name and type defined otherwise an Exception is
-    raised.
-
-    """
-    known_symbols = {
-        'g': {'name': 'Low', 'type': Decimal, },
-        'h': {'name': 'High', 'type': Decimal, },
-        'l1': {'name': 'Close', 'type': Decimal, },
-        'n': {'name': 'Name', 'type': str, },
-        'o': {'name': 'Open', 'type': Decimal, },
-        's': {'name': 'Code', 'type': str, },
-        'v': {'name': 'Volume', 'type': Decimal, },
-        'x': {'name': 'Exchange', 'type': str, },
-    }
-
-    output = []
-
-    for symbol in symbols:
-        if not known_symbols.has_key(symbol):
-            raise NotImplementedError('Symbol: %s is not known or unhandled' % (symbol, ))
-
-        # Find symbol in our known symbols
-        data = known_symbols[symbol]
-
-        # Add the field name and type to the output
-        output.append((data['name'], data['type']))
-
-    return tuple(output)
 
 def get_yahoo_quote_history_fields(fields):
     """Returns field names and types from given Yahoo YQL field names.
@@ -318,29 +351,7 @@ def get_yahoo_quote_history_fields(fields):
 
     return output
 
-def parse_yahoo_csv_quote(raw_quote, fields):
-    """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
-    useful data.
 
-    Given a dictionary containing the fields to include in the result.
-
-    """
-    if fields == () or fields is None:
-        raise Exception('Quote cannot be parsed without output field tuple.')
-
-    # Use the CSV module to parse the quote
-    reader = csv.reader(raw_quote.split(','))
-
-    # Read the raw data
-    raw_data = [row[0] for row in reader]
-
-    output = {}
-
-    for i in range(len(fields)):
-        field_name, field_type = fields[i]
-        output[field_name] = field_type(raw_data[i])
-
-    return output
 
 def parse_yahoo_quote_history(raw_quote, field_dict):
     """Parse the raw data from a Yahoo finance YQL historical quote into a

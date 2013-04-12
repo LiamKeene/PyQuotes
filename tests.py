@@ -8,7 +8,7 @@ from quote import *
 
 
 class RawYahooQuoteTestCase(unittest.TestCase):
-    """Test Case for `YahooQuote`._raw_quote` function.
+    """Test Case for `YahooQuote`.`_raw_quote` function.
 
     The `_raw_quote` function should query Yahoo's finance tables using YQL
     and return the latest quote for a particular stock (delayed by 20min).
@@ -23,16 +23,16 @@ class RawYahooQuoteTestCase(unittest.TestCase):
         self.data_dict = dict(zip(self.columns, self.data))
 
     def test_quote_good_code(self):
-        """raw_yahoo_quote should return True given a valid code."""
+        """_raw_quote should return True given a valid code."""
         ret, quote = YahooQuote()._raw_quote(self.good_code)
         self.assertTrue(ret)
 
     def test_quote_bad_code(self):
-        """raw_yahoo_quote should raise an Exception given an invalid code."""
+        """_raw_quote should raise an Exception given an invalid code."""
         self.assertRaises(Exception, YahooQuote()._raw_quote, self.bad_code)
 
     def test_quote_get_columns(self):
-        """raw_yahoo_quote should return the requested column only."""
+        """_raw_quote should return the requested column only."""
         ret, quote = YahooQuote()._raw_quote(self.good_code, self.columns)
 
         for key, value in self.data_dict.items():
@@ -41,7 +41,7 @@ class RawYahooQuoteTestCase(unittest.TestCase):
 
 
 class RawYahooCSVQuoteTestCase(unittest.TestCase):
-    """The `raw_yahoo_csv_quote` function should query Yahoo's finance CSV API and
+    """The `YahooCSVQuote`.`_raw_quote` function should query Yahoo's finance CSV API and
     return the latest quote for a particular stock (delayed by 20min).
 
     """
@@ -53,17 +53,17 @@ class RawYahooCSVQuoteTestCase(unittest.TestCase):
         self.csv_data = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
 
     def test_csv_quote_good_code(self):
-        """raw_yahoo_csv_quote should return True given a valid code."""
-        ret, quote = raw_yahoo_csv_quote(self.good_code)
+        """_raw_quote should return True given a valid code."""
+        ret, quote = YahooCSVQuote()._raw_quote(self.good_code)
         self.assertTrue(ret)
 
     def test_csv_quote_bad_code(self):
-        """raw_yahoo_csv_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, raw_yahoo_csv_quote, self.bad_code)
+        """_raw_quote should raise an Exception given an invalid code."""
+        self.assertRaises(Exception, YahooCSVQuote()._raw_quote, self.bad_code)
 
     def test_csv_quote_get_columns(self):
-        """raw_yahoo_csv_quote should return the requested columns only."""
-        ret, quote = raw_yahoo_csv_quote(self.good_code, self.csv_columns)
+        """_raw_quote should return the requested columns only."""
+        ret, quote = YahooCSVQuote()._raw_quote(self.good_code, self.csv_columns)
 
         self.assertTrue(ret)
         self.assertEqual(quote, self.csv_data)
@@ -135,9 +135,9 @@ class RawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
 
 
 class ParseYahooCSVQuoteSymbolsTestCase(unittest.TestCase):
-    """Test Case for the `parse_yahoo_csv_quote_symbols` function.
+    """Test Case for the `YahooCSVQuote`.`parse_symbols` function.
 
-    The `parse_yahoo_csv_quote_symbols` function should parse a string of Yahoo CSV tags
+    The `parse_symbols` function should parse a string of Yahoo CSV tags
     into a tuple of those tags.  Not as simple as it sounds as some tags consist
     of a letter and number.
 
@@ -152,15 +152,15 @@ class ParseYahooCSVQuoteSymbolsTestCase(unittest.TestCase):
         }
 
     def test_parse_yahoo_csv_quote_symbols(self):
-        """parse_yahoo_csv_quote_symbols should return a correctly parsed list of symbols."""
-        [self.assertEqual(parse_yahoo_csv_quote_symbols(symbol_str), symbol_list)
+        """parse_symbols should return a correctly parsed list of symbols."""
+        [self.assertEqual(YahooCSVQuote().parse_symbols(symbol_str), symbol_list)
             for symbol_str, symbol_list in self.parsed_symbols_dict.items()]
 
 
 class GetYahooQuoteFieldsTestCase(unittest.TestCase):
-    """Test Case for the `get_yahoo_quote_fields` function.
+    """Test Case for the `YahooQuote`.`get_quote_fields` function.
 
-    The `get_yahoo_quote_fields` function should return a dictionary of two-tuples
+    The `get_quote_fields` function should return a dictionary of two-tuples
     that contain the output field names and data type given the quote field names.
 
     """
@@ -181,20 +181,20 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
         ]
 
     def test_get_yahoo_quote_fields(self):
-        """get_yahoo_quote_fields should return dictionary of tuples of field names"""
+        """get_quote_fields should return dictionary of tuples of field names"""
         [self.assertEqual(YahooQuote().get_quote_fields(field_tuple), field_dict)
             for field_tuple, field_dict in self.test_data]
 
     def test_unknown_fields(self):
-        """get_yahoo_quote_fields should raise Exception if the field is unknown."""
+        """get_quote_fields should raise Exception if the field is unknown."""
         [self.assertRaises(Exception, YahooQuote().get_quote_fields, field_tuple)
             for field_tuple in self.test_unknown_fields]
 
 
 class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
-    """Test Case for the `get_yahoo_csv_quote_fields` function.
+    """Test Case for the `YahooCSVQuote`.`get_quote_fields` function.
 
-    The `get_yahoo_csv_quote_fields` function should return a tuple of two-tuples
+    The `get_quote_fields` function should return a tuple of two-tuples
     that contain the single CSV quote field names and data type given field symbols.
 
     The symbols are found at this url http://www.jarloo.com/yahoo_finance/ and
@@ -222,13 +222,13 @@ class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
         ]
 
     def test_get_yahoo_csv_quote_fields(self):
-        """get_yahoo_csv_quote_fields should return dictionary from list of symbols."""
-        [self.assertEqual(get_yahoo_csv_quote_fields(symbol_list), field_dict)
+        """get_quote_fields should return dictionary from list of symbols."""
+        [self.assertEqual(YahooCSVQuote().get_quote_fields(symbol_list), field_dict)
             for symbol_list, field_dict in self.test_data]
 
     def test_unknown_symbols(self):
-        """get_yahoo_csv_quote_fields should raise Exception if the symbol is inknown."""
-        [self.assertRaises(Exception, get_yahoo_csv_quote_fields, symbol_list)
+        """get_quote_fields should raise Exception if the symbol is inknown."""
+        [self.assertRaises(Exception, YahooCSVQuote().get_quote_fields, symbol_list)
             for symbol_list in self.test_unknown_symbols]
 
 
@@ -268,9 +268,9 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
 
 
 class ParseYahooQuoteTestCase(unittest.TestCase):
-    """Test Case for Yahoo parse functions.
+    """Test Case for the `YahooQuote`.`parse_quote` function.
 
-    The `parse_yahoo_quote` function should correctly parse the information from
+    The `parse_quote` function should correctly parse the information from
     a Yahoo YQL stock quote.
 
     """
@@ -323,7 +323,7 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
 
 
 class ParseYahooCSVQuoteTestCase(unittest.TestCase):
-    """The `parse_yahoo_csv_quote` function should correctly parse the information
+    """The `YahooCSVQuote`.`parse_quote` function should correctly parse the information
     from a Yahoo CSV stock quote.
 
     """
@@ -344,25 +344,25 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
         }
 
     def test_parse_yahoo_csv_quote(self):
-        """parse_yahoo_csv_quote should be able to parse CSV quote."""
-        quote = parse_yahoo_csv_quote(self.csv_quote, self.csv_quote_fields)
+        """parse_quote should be able to parse CSV quote."""
+        quote = YahooCSVQuote().parse_quote(self.csv_quote, self.csv_quote_fields)
 
         for key, value in self.csv_quote_parsed.items():
             self.assertTrue(key in quote)
             self.assertEqual(quote[key], value)
 
     def test_parse_yahoo_csv_quote_partial(self):
-        """parse_yahoo_csv_quote should be able to parse quote."""
+        """parse_quote should be able to parse quote."""
         self.assertEqual(
-            parse_yahoo_csv_quote(self.csv_quote, self.csv_quote_partial_fields),
+            YahooCSVQuote().parse_quote(self.csv_quote, self.csv_quote_partial_fields),
             self.csv_quote_partial_parsed
         )
 
     def test_parse_yahoo_csv_quote_no_fields(self):
-        """parse_yahoo_csv_quote should raise Exception with no specified fields."""
+        """parse_quote should raise Exception with no specified fields."""
         self.assertRaises(
             Exception,
-            parse_yahoo_csv_quote,
+            YahooCSVQuote().parse_quote,
             self.csv_quote, self.csv_quote_no_fields
         )
 
