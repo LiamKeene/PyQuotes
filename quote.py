@@ -273,6 +273,19 @@ def get_yahoo_quote_history_fields(fields):
 
     return output
 
+def parse_yahoo_quote(raw_quote, field_dict):
+    """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
+    useful data.
+
+    """
+    output = {}
+
+    for key, value in raw_quote.items():
+        field_name, field_type = field_dict[key]
+        output[field_name] = field_type(value)
+
+    return output
+
 def parse_yahoo_csv_quote(raw_quote, fields):
     """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
     useful data.
@@ -289,6 +302,39 @@ def parse_yahoo_csv_quote(raw_quote, fields):
     for i in range(len(fields)):
         field_name, field_type = fields[i]
         output[field_name] = field_type(raw_data[i])
+
+    return output
+
+def parse_yahoo_quote_history(raw_quote):
+    """Parse the raw data from a Yahoo finance YQL historical quote into a
+    dictionary of useful data.
+
+    """
+    # Data types for the historical quote fields
+    data_types = {
+        'Date': parse_date, 'Open': Decimal, 'High': Decimal, 'Low': Decimal,
+        'Close': Decimal, 'Volume': Decimal, 'Adj_Close': Decimal,
+    }
+    output = []
+
+    # Populate the output list with data dictionaries
+    for data in raw_quote:
+
+        # Create dictionary for this data
+        dic = {}
+
+        for key, value in data.items():
+            # YQL historical quotes have superfluous 'date' field
+            if key == 'date':
+               continue
+            # Lookup data type
+            data_type = data_types[key]
+
+            # Apply the datatype
+            dic[key] = data_type(value)
+
+        # Add the data dictionary to the output
+        output.append(dic)
 
     return output
 
