@@ -86,6 +86,10 @@ class YahooQuote(QuoteBase):
             'Volume': {'name': 'Volume', 'type': Decimal, },
         }
 
+        # If querying all fields, just return the ones we have defined
+        if fields == '*':
+            return known_fields
+
         output = {}
 
         for field in fields:

@@ -175,6 +175,7 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
                 },
             ],
         ]
+        self.test_get_all_fields = '*'
 
         self.test_unknown_fields = [
             ('RandomField'),
@@ -184,6 +185,13 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
         """get_quote_fields should return dictionary of tuples of field names"""
         [self.assertEqual(YahooQuote().get_quote_fields(field_tuple), field_dict)
             for field_tuple, field_dict in self.test_data]
+
+    def test_get_all_fields(self):
+        """get_quote_fields should return dictionary of tuples of all field names."""
+        field_dict = YahooQuote().get_quote_fields(self.test_get_all_fields)
+
+        self.assertTrue(isinstance(field_dict, dict))
+        self.assertTrue(len(field_dict.keys()) > 0)
 
     def test_unknown_fields(self):
         """get_quote_fields should raise Exception if the field is unknown."""
