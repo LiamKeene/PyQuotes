@@ -246,15 +246,6 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
     The `parse_yahoo_quote` function should correctly parse the information from
     a Yahoo YQL stock quote.
 
-    The `parse_yahoo_csv_quote` function should correctly parse the information
-    from a Yahoo CSV stock quote.
-
-    The `parse_yahoo_quote_history` function should correctly parse the
-    information from a Yahoo YQL stock history.
-
-    The `parse_yahoo_csv_quote_history` function should correctly parse the information
-    from a Yahoo CSV stock history.
-
     """
     def setUp(self):
         # The YQL quote will be dependant on the columns that are requested
@@ -273,18 +264,46 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             'Code': 'ABC.AX', 'Close': Decimal('3.330'), 'Volume': Decimal('1351200'),
         }
 
+    def test_parse_yahoo_quote(self):
+        """parse_yahoo_quote should be able to parse quote."""
+        quote = parse_yahoo_quote(self.quote, self.quote_fields)
+
+        for key, value in self.quote_parsed.items():
+            self.assertTrue(key in quote)
+            self.assertEqual(quote[key], value)
+
+
+class ParseYahooCSVQuoteTestCase(unittest.TestCase):
+    """The `parse_yahoo_csv_quote` function should correctly parse the information
+    from a Yahoo CSV stock quote.
+
+    """
+    def setUp(self):
         # The CSV quote will be dependant on the columns that are requested
         self.csv_quote = '"ABC.AX",3.330,1351200\r\n'
 
         # Tuple of two-tuples containing the requested fields and data types
         self.csv_quote_fields = (('Code', str), ('Close', Decimal), ('Volume', Decimal), )
 
-        self.csv_quote_parsed = self.quote_parsed
-
-        self.parsed_single = {
+        self.csv_quote_parsed = {
             'Code': 'ABC.AX', 'Close': Decimal('3.330'), 'Volume': Decimal('1351200'),
         }
 
+    def test_parse_yahoo_csv_quote(self):
+        """parse_yahoo_csv_quote should be able to parse CSV quote."""
+        quote = parse_yahoo_csv_quote(self.csv_quote, self.csv_quote_fields)
+
+        for key, value in self.csv_quote_parsed.items():
+            self.assertTrue(key in quote)
+            self.assertEqual(quote[key], value)
+
+
+class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
+    """The `parse_yahoo_quote_history` function should correctly parse the
+    information from a Yahoo YQL stock history.
+
+    """
+    def setUp(self):
         # The YQL historical quote has defined headers (at the moment anyway)
         self.quote_history = [
             {
@@ -335,6 +354,20 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             },
         ]
 
+    def test_parse_yahoo_quote_history(self):
+        """parse_yahoo_quote_history should be able to parse historical quotes."""
+        self.assertEqual(
+            parse_yahoo_quote_history(self.quote_history, self.quote_history_fields),
+            self.quote_history_parsed
+        )
+
+
+class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
+    """The `parse_yahoo_csv_quote_history` function should correctly parse the
+    information from a Yahoo CSV stock history.
+
+    """
+    def setUp(self):
         # The CSV historical quote has defined headers (the first row of CSV data)
         self.csv_quote_history = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
             '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
@@ -342,33 +375,34 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
             '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
 
         # The CSV quote fields are slightly different(!)
-        self.csv_quote_history_fields = self.quote_history_fields
+        self.csv_quote_history_fields = {
+            'Date': ('Date', parse_date), 'Open': ('Open', Decimal),
+            'High': ('High', Decimal), 'Low': ('Low', Decimal),
+            'Close': ('Close', Decimal), 'Adj_Close': ('Adj Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
         self.csv_quote_history_fields.update({'Adj Close': ('Adj Close', Decimal)})
 
-        self.csv_quote_history_parsed = self.quote_history_parsed
-
-    def test_parse_yahoo_quote(self):
-        """parse_yahoo_quote should be able to parse quote."""
-        quote = parse_yahoo_quote(self.quote, self.quote_fields)
-
-        for key, value in self.quote_parsed.items():
-            self.assertTrue(key in quote)
-            self.assertEqual(quote[key], value)
-
-    def test_parse_yahoo_csv_quote(self):
-        """parse_yahoo_csv_quote should be able to parse CSV quote."""
-        quote = parse_yahoo_csv_quote(self.csv_quote, self.csv_quote_fields)
-
-        for key, value in self.csv_quote_parsed.items():
-            self.assertTrue(key in quote)
-            self.assertEqual(quote[key], value)
-
-    def test_parse_yahoo_quote_history(self):
-        """parse_yahoo_quote_history should be able to parse historical quotes."""
-        self.assertEqual(
-            parse_yahoo_quote_history(self.quote_history, self.quote_history_fields),
-            self.quote_history_parsed
-        )
+        self.csv_quote_history_parsed = [
+            {
+                'Date': date(2013, 4, 12), 'Open': Decimal('3.36'),
+                'High': Decimal('3.38'), 'Low': Decimal('3.31'),
+                'Close': Decimal('3.33'), 'Adj Close': Decimal('3.33'),
+                'Volume': Decimal('1351200'),
+            },
+            {
+                'Date': date(2013, 4, 11), 'Open': Decimal('3.39'),
+                'High': Decimal('3.41'), 'Low': Decimal('3.33'),
+                'Close': Decimal('3.34'), 'Adj Close': Decimal('3.34'),
+                'Volume': Decimal('1225300'),
+            },
+            {
+                'Date': date(2013, 4, 10), 'Open': Decimal('3.39'),
+                'High': Decimal('3.41'), 'Low': Decimal('3.38'),
+                'Close': Decimal('3.40'), 'Adj Close': Decimal('3.40'),
+                'Volume': Decimal('2076700'),
+            },
+        ]
 
     def test_parse_yahoo_csv_quote_history(self):
         """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
