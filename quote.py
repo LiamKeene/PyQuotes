@@ -153,7 +153,7 @@ def raw_yahoo_csv_quote_history(code, date_range):
 
     return True, quote
 
-def parse_yahoo_csv_symbols(symbols):
+def parse_yahoo_csv_quote_symbols(symbols):
     """Parse a string of Yahoo CSV symbols and return them as a tuple.
 
     This is required as the symbols are either single letters or a letter and
@@ -180,7 +180,7 @@ def parse_yahoo_csv_symbols(symbols):
 
     return tuple(output)
 
-def get_yahoo_csv_fields(symbols):
+def get_yahoo_csv_quote_fields(symbols):
     """Returns field names and types from given Yahoo CSV symbols.
 
     Each symbol needs it's name and type defined otherwise an Exception is
@@ -231,7 +231,7 @@ def parse_yahoo_csv_quote(raw_quote, fields):
 
     return output
 
-def parse_yahoo_csv_history(raw_quote):
+def parse_yahoo_csv_quote_history(raw_quote):
     """Parse the raw data from a Yahoo finance CSV historical quote into a
     dictionary of useful data.
 
