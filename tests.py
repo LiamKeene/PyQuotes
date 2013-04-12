@@ -70,7 +70,7 @@ class RawYahooCSVQuoteTestCase(unittest.TestCase):
 
 
 class RawYahooQuoteHistoryTestCase(unittest.TestCase):
-    """The `raw_yahoo_quote_history` function should query Yahoo's finance tables
+    """The `YahooQuoteHistory`.`_raw_quote` function should query Yahoo's finance tables
     using YQL and return the historical quote data for a particular stock over
     a given date range.
 
@@ -87,8 +87,8 @@ class RawYahooQuoteHistoryTestCase(unittest.TestCase):
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
 
     def test_history_good_code(self):
-        """raw_yahoo_quote_history should return True given a valid code."""
-        ret, quotes = raw_yahoo_quote_history(self.good_code, self.test_dates)
+        """_raw_quote should return True given a valid code."""
+        ret, quotes = YahooQuoteHistory()._raw_quote(self.good_code, self.test_dates)
 
         self.assertTrue(ret)
         self.assertEqual(type(quotes), list)
@@ -233,9 +233,9 @@ class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
 
 
 class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
-    """Test Case for the `get_yahoo_quote_history_fields` function.
+    """Test Case for the `YahooQuoteHistory`.`get_quote_fields` function.
 
-    The `get_yahoo_quote_history_fields` function should return a dictionary of
+    The `get_quote_fields` function should return a dictionary of
     two-tuples that contain the output field names and data type given the quote
     field names.
 
@@ -257,13 +257,13 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
         ]
 
     def test_get_yahoo_quote_history_fields(self):
-        """get_yahoo_quote_history_fields should return dictionary of tuples of field names"""
-        [self.assertEqual(get_yahoo_quote_history_fields(field_tuple), field_dict)
+        """get_quote_fields should return dictionary of tuples of field names"""
+        [self.assertEqual(YahooQuoteHistory().get_quote_fields(field_tuple), field_dict)
             for field_tuple, field_dict in self.test_data]
 
     def test_unknown_fields(self):
-        """get_yahoo_quote_fields should raise Exception if the field is unknown."""
-        [self.assertRaises(Exception, get_yahoo_quote_history_fields, field_tuple)
+        """get_quote_fields should raise Exception if the field is unknown."""
+        [self.assertRaises(Exception, YahooQuoteHistory().get_quote_fields, field_tuple)
             for field_tuple in self.test_unknown_fields]
 
 
@@ -368,7 +368,7 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
 
 
 class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
-    """The `parse_yahoo_quote_history` function should correctly parse the
+    """The `YahooQuoteHistory`.`parse_quote` function should correctly parse the
     information from a Yahoo YQL stock history.
 
     """
@@ -446,24 +446,24 @@ class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
         ]
 
     def test_parse_yahoo_quote_history(self):
-        """parse_yahoo_quote_history should be able to parse historical quotes."""
+        """parse_quote should be able to parse historical quotes."""
         self.assertEqual(
-            parse_yahoo_quote_history(self.quote_history, self.quote_history_fields),
+            YahooQuoteHistory().parse_quote(self.quote_history, self.quote_history_fields),
             self.quote_history_parsed
         )
 
     def test_parse_yahoo_quote_history_partial(self):
-        """parse_yahoo_quote_history should be able to parse historical quotes."""
+        """parse_quote should be able to parse historical quotes."""
         self.assertEqual(
-            parse_yahoo_quote_history(self.quote_history, self.quote_history_partial_fields),
+            YahooQuoteHistory().parse_quote(self.quote_history, self.quote_history_partial_fields),
             self.quote_history_partial_parsed
         )
 
     def test_parse_yahoo_quote_history_no_fields(self):
-        """parse_yahoo_quote_history should raise Exception with no specified fields."""
+        """parse_quote should raise Exception with no specified fields."""
         self.assertRaises(
             Exception,
-            parse_yahoo_quote_history,
+            YahooQuoteHistory().parse_quote,
             self.quote_history, self.quote_history_no_fields
         )
 

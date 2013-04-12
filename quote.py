@@ -234,48 +234,121 @@ class YahooCSVQuote(QuoteBase):
 
         return output
 
-def raw_yahoo_quote_history(code, date_range):
-    """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
-    Given the code of the stock and a list containing the start and end dates of
-    the data.
+class YahooQuoteHistory(QuoteBase):
+    """Represents a set of historical quotes that are obtained via the Yahoo
+    Finance community table using the YQL library.
 
     """
-    # Validate dates first
-    ret, date_range = validate_date_range(date_range)
+    def _raw_quote(self, code, date_range):
+        """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
-    if not ret:
-        # raise exception or just quit - validate_date_range will raise an exceptions
-        raise Exception('Date range is no valid')
+        Given the code of the stock and a list containing the start and end dates of
+        the data.
 
-    start_date = date_range[0]
-    end_date = date_range[1]
+        """
+        # Validate dates first
+        ret, date_range = validate_date_range(date_range)
 
-    # Only interested in Australian equities at the moment
-    exchange = 'AX'
+        if not ret:
+            # raise exception or just quit - validate_date_range will raise an exceptions
+            raise Exception('Date range is no valid')
 
-    # Create query object - must set the environment for community tables
-    y = yql.Public()
-    env = 'http://www.datatables.org/alltables.env'
+        start_date = date_range[0]
+        end_date = date_range[1]
 
-    # Execute the query and get the response
-    query = 'select * from yahoo.finance.historicaldata ' \
-        'where symbol = "%(code)s.%(exchange)s" ' \
-        'and startDate = "%(start_date)s" and endDate = "%(end_date)s"' \
-        % {
-            'code': code, 'exchange': exchange,
-            'start_date': start_date, 'end_date': end_date,
+        # Only interested in Australian equities at the moment
+        exchange = 'AX'
+
+        # Create query object - must set the environment for community tables
+        y = yql.Public()
+        env = 'http://www.datatables.org/alltables.env'
+
+        # Execute the query and get the response
+        query = 'select * from yahoo.finance.historicaldata ' \
+            'where symbol = "%(code)s.%(exchange)s" ' \
+            'and startDate = "%(start_date)s" and endDate = "%(end_date)s"' \
+            % {
+                'code': code, 'exchange': exchange,
+                'start_date': start_date, 'end_date': end_date,
+            }
+        response = y.execute(query, env=env)
+
+        # If the response results are null there was an error
+        if response.results is None:
+            raise Exception('Error with results')
+
+        # Get the quote
+        quote = response.results['quote']
+
+        return True, quote
+
+    def get_quote_fields(self, fields):
+        """Returns field names and types from given Yahoo YQL field names.
+
+        Each field needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        known_fields = {
+            'Date': {'name': 'Date', 'type': parse_date, },
+            'Open': {'name': 'Open', 'type': Decimal, },
+            'High': {'name': 'High', 'type': Decimal, },
+            'Low': {'name': 'Low', 'type': Decimal, },
+            'Close': {'name': 'Close', 'type': Decimal, },
+            'Volume': {'name': 'Volume', 'type': Decimal, },
         }
-    response = y.execute(query, env=env)
 
-    # If the response results are null there was an error
-    if response.results is None:
-        raise Exception('Error with results')
+        output = {}
 
-    # Get the quote
-    quote = response.results['quote']
+        for field in fields:
+            if not known_fields.has_key(field):
+                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
 
-    return True, quote
+            # Find field in our known fields
+            data = known_fields[field]
+
+            # Add the field name and type to the output
+            output[field] = (data['name'], data['type'])
+
+        return output
+
+    def parse_quote(self, raw_quote, field_dict):
+        """Parse the raw data from a Yahoo finance YQL historical quote into a
+        dictionary of useful data.
+
+        Given a dictionary containing the fields to include in the result.
+
+        """
+        if field_dict == {} or field_dict is None:
+            raise Exception('Quote cannot be parsed without output field dictionary.')
+
+        output = []
+
+        # Populate the output list with data dictionaries
+        for data in raw_quote:
+
+            # Create dictionary for this data
+            dic = {}
+
+            for key, value in data.items():
+                # Ignore fields in data that are not in requested field dict
+                if not field_dict.has_key(key):
+                    continue
+                # YQL historical quotes have superfluous 'date' field
+                if key == 'date':
+                   continue
+                # Lookup data name and data type
+                data_name, data_type = field_dict[key]
+
+                # Apply the datatype
+                dic[data_name] = data_type(value)
+
+            # Add the data dictionary to the output
+            output.append(dic)
+
+        return output
+
 
 def raw_yahoo_csv_quote_history(code, date_range):
     """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
@@ -316,78 +389,6 @@ def raw_yahoo_csv_quote_history(code, date_range):
     quote = response.read()
 
     return True, quote
-
-
-
-
-
-def get_yahoo_quote_history_fields(fields):
-    """Returns field names and types from given Yahoo YQL field names.
-
-    Each field needs it's name and type defined otherwise an Exception is
-    raised.
-
-    """
-    known_fields = {
-        'Date': {'name': 'Date', 'type': parse_date, },
-        'Open': {'name': 'Open', 'type': Decimal, },
-        'High': {'name': 'High', 'type': Decimal, },
-        'Low': {'name': 'Low', 'type': Decimal, },
-        'Close': {'name': 'Close', 'type': Decimal, },
-        'Volume': {'name': 'Volume', 'type': Decimal, },
-    }
-
-    output = {}
-
-    for field in fields:
-        if not known_fields.has_key(field):
-            raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
-
-        # Find field in our known fields
-        data = known_fields[field]
-
-        # Add the field name and type to the output
-        output[field] = (data['name'], data['type'])
-
-    return output
-
-
-
-def parse_yahoo_quote_history(raw_quote, field_dict):
-    """Parse the raw data from a Yahoo finance YQL historical quote into a
-    dictionary of useful data.
-
-    Given a dictionary containing the fields to include in the result.
-
-    """
-    if field_dict == {} or field_dict is None:
-        raise Exception('Quote cannot be parsed without output field dictionary.')
-
-    output = []
-
-    # Populate the output list with data dictionaries
-    for data in raw_quote:
-
-        # Create dictionary for this data
-        dic = {}
-
-        for key, value in data.items():
-            # Ignore fields in data that are not in requested field dict
-            if not field_dict.has_key(key):
-                continue
-            # YQL historical quotes have superfluous 'date' field
-            if key == 'date':
-               continue
-            # Lookup data name and data type
-            data_name, data_type = field_dict[key]
-
-            # Apply the datatype
-            dic[data_name] = data_type(value)
-
-        # Add the data dictionary to the output
-        output.append(dic)
-
-    return output
 
 def parse_yahoo_csv_quote_history(raw_quote, field_dict):
     """Parse the raw data from a Yahoo finance CSV historical quote into a
