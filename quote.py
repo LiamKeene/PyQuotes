@@ -17,7 +17,7 @@ class QuoteBase(object):
     different models.
 
     """
-    def _raw_quote(self):
+    def get_raw_quote(self):
         """Method to fetch a raw unparsed quote from a provider."""
         raise NotImplementedError('This method must be defined by subclass.')
 
@@ -35,7 +35,7 @@ class YahooQuote(QuoteBase):
     using the YQL library.
 
     """
-    def _raw_quote(self, code, query_columns='*'):
+    def get_raw_quote(self, code, query_columns='*'):
         """Get a quote from the Yahoo YQL finance tables and return the result.
 
         Given the code of the stock and an optional list of columns of data to get
@@ -100,7 +100,7 @@ class YahooQuote(QuoteBase):
 
         return output
 
-    def parse_quote(self, raw_quote, field_dict):
+    def parse_quote(self, get_raw_quote, field_dict):
         """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
         useful data.
 
@@ -112,7 +112,7 @@ class YahooQuote(QuoteBase):
 
         output = {}
 
-        for key, value in raw_quote.items():
+        for key, value in get_raw_quote.items():
             # Ignore fields in data that are not in requested field dict
             if not field_dict.has_key(key):
                 continue
@@ -126,7 +126,7 @@ class YahooCSVQuote(QuoteBase):
     """Represents a quote that is obtained via the Yahoo CSV API.
 
     """
-    def _raw_quote(self, code, symbols='nsxl1'):
+    def get_raw_quote(self, code, symbols='nsxl1'):
         """Get a quote from the Yahoo Finance CSV API and return the result.
 
         Given the code of the stock and an optional list of symbols that correspond
@@ -210,7 +210,7 @@ class YahooCSVQuote(QuoteBase):
 
         return tuple(output)
 
-    def parse_quote(self, raw_quote, fields):
+    def parse_quote(self, get_raw_quote, fields):
         """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
         useful data.
 
@@ -221,7 +221,7 @@ class YahooCSVQuote(QuoteBase):
             raise Exception('Quote cannot be parsed without output field tuple.')
 
         # Use the CSV module to parse the quote
-        reader = csv.reader(raw_quote.split(','))
+        reader = csv.reader(get_raw_quote.split(','))
 
         # Read the raw data
         raw_data = [row[0] for row in reader]
@@ -240,7 +240,7 @@ class YahooQuoteHistory(QuoteBase):
     Finance community table using the YQL library.
 
     """
-    def _raw_quote(self, code, date_range):
+    def get_raw_quote(self, code, date_range):
         """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
         Given the code of the stock and a list containing the start and end dates of
@@ -313,7 +313,7 @@ class YahooQuoteHistory(QuoteBase):
 
         return output
 
-    def parse_quote(self, raw_quote, field_dict):
+    def parse_quote(self, get_raw_quote, field_dict):
         """Parse the raw data from a Yahoo finance YQL historical quote into a
         dictionary of useful data.
 
@@ -326,7 +326,7 @@ class YahooQuoteHistory(QuoteBase):
         output = []
 
         # Populate the output list with data dictionaries
-        for data in raw_quote:
+        for data in get_raw_quote:
 
             # Create dictionary for this data
             dic = {}
@@ -355,7 +355,7 @@ class YahooCSVQuoteHistory(QuoteBase):
     CSV API.
 
     """
-    def _raw_quote(self, code, date_range):
+    def get_raw_quote(self, code, date_range):
         """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
 
         Given the code of the stock and a list containing the start and end dates of
@@ -425,7 +425,7 @@ class YahooCSVQuoteHistory(QuoteBase):
 
         return output
 
-    def parse_quote(self, raw_quote, field_dict):
+    def parse_quote(self, get_raw_quote, field_dict):
         """Parse the raw data from a Yahoo finance CSV historical quote into a
         dictionary of useful data.
 
@@ -436,7 +436,7 @@ class YahooCSVQuoteHistory(QuoteBase):
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
         # Use the CSV module to parse the quote
-        reader = csv.reader(raw_quote.split('\n'))
+        reader = csv.reader(get_raw_quote.split('\n'))
 
         # Read the raw data
         raw_data = [row for row in reader]
