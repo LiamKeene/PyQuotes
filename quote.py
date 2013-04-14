@@ -35,11 +35,28 @@ class YahooQuote(QuoteBase):
     using the YQL library.
 
     """
-    def get_raw_quote(self, code, query_columns='*'):
-        """Get a quote from the Yahoo YQL finance tables and return the result.
+    def __init__(self, code, columns='*'):
+        """Initialise a YahooQuote given the stock code.
 
-        Given the code of the stock and an optional list of columns of data to get
-        in the quote.
+        Optionally give a list of columns to include in the YQL query (default is
+        all columns `*`).
+
+        """
+        # Store the stock code and columns of data to fetch
+        self.code = code
+        self.columns = columns
+
+        # Determine the field names and types
+        self.fields = self.get_quote_fields()
+
+        # Fetch the raw quote
+        self.raw_quote = self.get_raw_quote()
+
+        # Parse the raw quote with the field names and types
+        self.quote = self.parse_quote()
+
+    def get_raw_quote(self):
+        """Get a quote from the Yahoo YQL finance tables and return the result.
 
         """
         # Only interested in Australian equities at the moment
@@ -53,13 +70,13 @@ class YahooQuote(QuoteBase):
         env = 'http://www.datatables.org/alltables.env'
 
         # Ensure the error column in included and then join as a comma separated string
-        if not query_columns == '*' and not error_column in query_columns:
-            query_columns.append(error_column)
-        columns = ','.join(query_columns)
+        if not self.columns == '*' and not error_column in self.columns:
+            self.columns.append(error_column)
+        columns = ','.join(self.columns)
 
         # Execute the query and get the response
         query = 'select %(columns)s from yahoo.finance.quotes where symbol = "%(code)s.%(exchange)s"' \
-            % {'code': code, 'exchange': exchange, 'columns': columns, }
+            % {'code': self.code, 'exchange': exchange, 'columns': columns, }
         response = y.execute(query, env=env)
 
         # Get the quote and the error field
@@ -69,11 +86,11 @@ class YahooQuote(QuoteBase):
         # If no error return the quote or raise an exception
         if error is None:
             # Valid code and quote
-            return True, quote
+            return quote
 
         raise Exception(error)
 
-    def get_quote_fields(self, fields):
+    def get_quote_fields(self):
         """Returns dictionary of field names and types from given Yahoo YQL field names.
 
         Each field needs it's name and type defined otherwise an Exception is
@@ -81,18 +98,20 @@ class YahooQuote(QuoteBase):
 
         """
         known_fields = {
-            'Symbol': {'name': 'Code', 'type': str, },
+            'Name': {'name': 'Name', 'type': str, },
             'LastTradePriceOnly': {'name': 'Close', 'type': Decimal, },
+            'StockExchange': {'name': 'Exchange', 'type': str, },
+            'Symbol': {'name': 'Code', 'type': str, },
             'Volume': {'name': 'Volume', 'type': Decimal, },
         }
 
         # If querying all fields, just return the ones we have defined
-        if fields == '*':
+        if self.columns == '*':
             return known_fields
 
         output = {}
 
-        for field in fields:
+        for field in self.columns:
             if not known_fields.has_key(field):
                 raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
 
@@ -104,23 +123,23 @@ class YahooQuote(QuoteBase):
 
         return output
 
-    def parse_quote(self, get_raw_quote, field_dict):
+    def parse_quote(self):
         """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
         useful data.
 
         Given a dictionary containing the fields to include in the result.
 
         """
-        if field_dict == {} or field_dict is None:
+        if self.fields == {} or self.fields is None:
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
         output = {}
 
-        for key, value in get_raw_quote.items():
+        for key, value in self.raw_quote.items():
             # Ignore fields in data that are not in requested field dict
-            if not field_dict.has_key(key):
+            if not self.fields.has_key(key):
                 continue
-            field_name, field_type = field_dict[key]
+            field_name, field_type = self.fields[key]
             output[field_name] = field_type(value)
 
         return output

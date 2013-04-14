@@ -7,6 +7,31 @@ from decimal import Decimal
 from quote import *
 
 
+class YahooQuoteTestCase(unittest.TestCase):
+    """Test Case for the YahooQuote model.
+
+    """
+    def setUp(self):
+        self.good_code = 'ABC'
+        self.bad_code = 'A'
+
+        self.columns = ['Name', 'Symbol', 'StockExchange', ]
+        self.data = [u'ADEL BRTN FPO', u'ABC.AX', u'ASX', ]
+        self.data_dict = dict(zip(self.columns, self.data))
+
+    def test_quote_good_code(self):
+        """YahooQuote should create a new quote object, fetch a quote and parse it."""
+        quote = YahooQuote(self.good_code, self.columns)
+
+        # Check we got a raw quote
+        self.assertTrue(quote.raw_quote is not None)
+
+        # Check the quote has been parsed
+        for key, value in quote.quote.items():
+            self.assertTrue(key in quote.quote)
+            self.assertEqual(quote.quote[key], value)
+
+
 class RawYahooQuoteTestCase(unittest.TestCase):
     """Test Case for `YahooQuote`.`get_raw_quote` function.
 
