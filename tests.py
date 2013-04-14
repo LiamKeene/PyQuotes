@@ -31,6 +31,15 @@ class YahooQuoteTestCase(unittest.TestCase):
             self.assertTrue(key in quote.quote)
             self.assertEqual(quote.quote[key], value)
 
+    def test_quote_deferred(self):
+        """YahooQuote should defer fetching and parsing of quote if required."""
+        quote = YahooQuote(self.good_code, self.columns, defer=True)
+
+        # Check quote is unprocessed
+        self.assertEqual(quote.fields, {})
+        self.assertTrue(quote.raw_quote is None)
+        self.assertTrue(quote.quote is None)
+
 
 class RawYahooQuoteTestCase(unittest.TestCase):
     """Test Case for `YahooQuote`.`get_raw_quote` function.

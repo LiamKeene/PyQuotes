@@ -35,7 +35,7 @@ class YahooQuote(QuoteBase):
     using the YQL library.
 
     """
-    def __init__(self, code, columns='*'):
+    def __init__(self, code, columns='*', defer=False):
         """Initialise a YahooQuote given the stock code.
 
         Optionally give a list of columns to include in the YQL query (default is
@@ -46,14 +46,14 @@ class YahooQuote(QuoteBase):
         self.code = code
         self.columns = columns
 
-        # Determine the field names and types
-        self.fields = self.get_quote_fields()
+        # Default value of quote
+        self.fields = {}
+        self.raw_quote = None
+        self.quote = None
 
-        # Fetch the raw quote
-        self.raw_quote = self.get_raw_quote()
-
-        # Parse the raw quote with the field names and types
-        self.quote = self.parse_quote()
+        # Process quote or defer it for later
+        if not defer:
+            self.process_quote()
 
     def get_raw_quote(self):
         """Get a quote from the Yahoo YQL finance tables and return the result.
@@ -143,6 +143,21 @@ class YahooQuote(QuoteBase):
             output[field_name] = field_type(value)
 
         return output
+
+    def process_quote(self):
+        """Helper method to process a quote.
+
+        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
+
+        """
+        # Determine the field names and types
+        self.fields = self.get_quote_fields()
+
+        # Fetch the raw quote
+        self.raw_quote = self.get_raw_quote()
+
+        # Parse the raw quote with the field names and types
+        self.quote = self.parse_quote()
 
 
 class YahooCSVQuote(QuoteBase):
