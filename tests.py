@@ -41,7 +41,50 @@ class YahooQuoteTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
-class RawYahooQuoteTestCase(unittest.TestCase):
+class GetYahooQuoteFieldsTestCase(unittest.TestCase):
+    """Test Case for the `YahooQuote`.`get_quote_fields` function.
+
+    The `get_quote_fields` function should return a dictionary of two-tuples
+    that contain the output field names and data type given the quote field names.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_columns = ['Symbol', 'LastTradePriceOnly', 'Volume']
+        self.test_quote = YahooQuote(self.test_code, self.test_columns, defer=True)
+        self.test_fields = {
+            'Symbol': ('Code', str),
+            'LastTradePriceOnly': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+
+        self.test_get_all_fields = '*'
+        self.test_quote_all_fields = YahooQuote(
+            self.test_code, self.test_get_all_fields, defer=True
+        )
+
+        self.test_unknown_fields = ['RandomField', ]
+        self.test_quote_unknown_fields = YahooQuote(
+            self.test_code, self.test_unknown_fields, defer=True
+        )
+
+    def test_get_quote_fields(self):
+        """get_quote_fields should return dictionary of tuples of field names."""
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_fields)
+
+    def test_get_all_fields(self):
+        """get_quote_fields should return dictionary of tuples of all field names."""
+        field_dict = self.test_quote_all_fields.get_quote_fields()
+
+        self.assertTrue(isinstance(field_dict, dict))
+        self.assertTrue(len(field_dict.keys()) > 0)
+
+    def test_unknown_fields(self):
+        """get_quote_fields should raise Exception if the field is unknown."""
+        self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
+
+
+class GetRawYahooQuoteTestCase(unittest.TestCase):
     """Test Case for `YahooQuote`.`get_raw_quote` function.
 
     The `get_raw_quote` function should query Yahoo's finance tables using YQL
@@ -56,22 +99,96 @@ class RawYahooQuoteTestCase(unittest.TestCase):
         self.data = [u'ADEL BRTN FPO', u'ABC.AX', u'ASX', ]
         self.data_dict = dict(zip(self.columns, self.data))
 
+        self.test_good_quote = YahooQuote(self.good_code, defer=True)
+
+        self.test_bad_quote = YahooQuote(self.bad_code, defer=True)
+
+        self.test_quote_columns = YahooQuote(self.good_code, self.columns, defer=True)
+
     def test_quote_good_code(self):
         """get_raw_quote should return True given a valid code."""
-        ret, quote = YahooQuote().get_raw_quote(self.good_code)
-        self.assertTrue(ret)
+        raw_quote = self.test_good_quote.get_raw_quote()
+
+        self.assertTrue(raw_quote is not None)
 
     def test_quote_bad_code(self):
         """get_raw_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, YahooQuote().get_raw_quote, self.bad_code)
+        self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
 
     def test_quote_get_columns(self):
         """get_raw_quote should return the requested column only."""
-        ret, quote = YahooQuote().get_raw_quote(self.good_code, self.columns)
+        raw_quote = self.test_quote_columns.get_raw_quote()
 
         for key, value in self.data_dict.items():
-            self.assertTrue(key in quote)
-            self.assertEqual(quote[key], self.data_dict[key])
+            self.assertTrue(key in raw_quote)
+            self.assertEqual(raw_quote[key], self.data_dict[key])
+
+
+class ParseYahooQuoteTestCase(unittest.TestCase):
+    """Test Case for the `YahooQuote`.`parse_quote` function.
+
+    The `parse_quote` function should correctly parse the information from
+    a Yahoo YQL stock quote.
+
+    """
+    def setUp(self):
+        # Create three test quote objects
+        self.test_code = 'ABC'
+        self.test_columns = ['Symbol', 'LastTradePriceOnly', 'Volume']
+        self.test_quote = YahooQuote(self.test_code, self.test_columns, defer=True)
+        self.test_quote_partial = YahooQuote(self.test_code, self.test_columns, defer=True)
+        self.test_quote_no_fields = YahooQuote(self.test_code, self.test_columns, defer=True)
+
+        # Explicitly set the quote fields and raw quote (is this a good idea?)
+        self.test_quote.fields = {
+            'Symbol': ('Code', str),
+            'LastTradePriceOnly': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+        self.test_quote.raw_quote = {
+            u'Symbol': u'ABC.AX', u'LastTradePriceOnly': u'3.330', u'Volume': u'1351200',
+        }
+
+        # The parsed quote
+        self.test_parsed_quote = {
+            'Code': 'ABC.AX', 'Close': Decimal('3.330'), 'Volume': Decimal('1351200'),
+        }
+
+        # Explicitly set a partial set of the quote fields
+        self.test_quote_partial.fields = {
+            'Symbol': ('Code', str),
+        }
+        self.test_quote_partial.raw_quote = self.test_quote.raw_quote
+
+        # The partially parsed_quote
+        self.test_parsed_quote_partial = {
+            'Code': 'ABC.AX',
+        }
+
+        # Explicitly set no fields to parse
+        self.test_quote_no_fields.fields = {}
+        self.test_quote_no_fields.raw_quote = self.test_quote.raw_quote
+
+    def test_parse_quote(self):
+        """parse_quote should be able to parse quote."""
+        parsed_quote = self.test_quote.parse_quote()
+
+        for key, value in self.test_parsed_quote.items():
+            self.assertTrue(key in parsed_quote)
+            self.assertEqual(parsed_quote[key], value)
+
+    def test_parse_quote_partial(self):
+        """parse_quote should be able to parse quote."""
+        parsed_quote = self.test_quote_partial.parse_quote()
+
+        for key, value in self.test_parsed_quote_partial.items():
+            self.assertTrue(key in parsed_quote)
+            self.assertEqual(parsed_quote[key], value)
+
+    def test_parse_quote_no_fields(self):
+        """parse_quote should raise Exception with no specified fields."""
+        self.assertRaises(Exception, self.test_quote_no_fields.parse_quote)
+
 
 
 class RawYahooCSVQuoteTestCase(unittest.TestCase):
@@ -191,48 +308,6 @@ class ParseYahooCSVQuoteSymbolsTestCase(unittest.TestCase):
             for symbol_str, symbol_list in self.parsed_symbols_dict.items()]
 
 
-class GetYahooQuoteFieldsTestCase(unittest.TestCase):
-    """Test Case for the `YahooQuote`.`get_quote_fields` function.
-
-    The `get_quote_fields` function should return a dictionary of two-tuples
-    that contain the output field names and data type given the quote field names.
-
-    """
-    def setUp(self):
-        self.test_data = [
-            [
-                ('Symbol', 'LastTradePriceOnly', 'Volume'),
-                {
-                    'Symbol': ('Code', str),
-                    'LastTradePriceOnly': ('Close', Decimal),
-                    'Volume': ('Volume', Decimal),
-                },
-            ],
-        ]
-        self.test_get_all_fields = '*'
-
-        self.test_unknown_fields = [
-            ('RandomField'),
-        ]
-
-    def test_get_yahoo_quote_fields(self):
-        """get_quote_fields should return dictionary of tuples of field names"""
-        [self.assertEqual(YahooQuote().get_quote_fields(field_tuple), field_dict)
-            for field_tuple, field_dict in self.test_data]
-
-    def test_get_all_fields(self):
-        """get_quote_fields should return dictionary of tuples of all field names."""
-        field_dict = YahooQuote().get_quote_fields(self.test_get_all_fields)
-
-        self.assertTrue(isinstance(field_dict, dict))
-        self.assertTrue(len(field_dict.keys()) > 0)
-
-    def test_unknown_fields(self):
-        """get_quote_fields should raise Exception if the field is unknown."""
-        [self.assertRaises(Exception, YahooQuote().get_quote_fields, field_tuple)
-            for field_tuple in self.test_unknown_fields]
-
-
 class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `YahooCSVQuote`.`get_quote_fields` function.
 
@@ -307,61 +382,6 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
         """get_quote_fields should raise Exception if the field is unknown."""
         [self.assertRaises(Exception, YahooQuoteHistory().get_quote_fields, field_tuple)
             for field_tuple in self.test_unknown_fields]
-
-
-class ParseYahooQuoteTestCase(unittest.TestCase):
-    """Test Case for the `YahooQuote`.`parse_quote` function.
-
-    The `parse_quote` function should correctly parse the information from
-    a Yahoo YQL stock quote.
-
-    """
-    def setUp(self):
-        # The YQL quote will be dependant on the columns that are requested
-        self.quote = {
-            u'Symbol': u'ABC.AX', u'LastTradePriceOnly': u'3.330', u'Volume': u'1351200',
-        }
-
-        # List of columns used in the YQL quote
-        self.quote_fields = {
-            'Symbol': ('Code', str),
-            'LastTradePriceOnly': ('Close', Decimal),
-            'Volume': ('Volume', Decimal),
-        }
-        self.quote_partial_fields = {
-            'Symbol': ('Code', str),
-        }
-        self.quote_no_fields = {}
-
-        self.quote_parsed = {
-            'Code': 'ABC.AX', 'Close': Decimal('3.330'), 'Volume': Decimal('1351200'),
-        }
-        self.quote_partial_parsed = {
-            'Code': 'ABC.AX',
-        }
-
-    def test_parse_quote(self):
-        """parse_quote should be able to parse quote."""
-        quote = YahooQuote().parse_quote(self.quote, self.quote_fields)
-
-        for key, value in self.quote_parsed.items():
-            self.assertTrue(key in quote)
-            self.assertEqual(quote[key], value)
-
-    def test_parse_quote_partial(self):
-        """parse_quote should be able to parse quote."""
-        self.assertEqual(
-            YahooQuote().parse_quote(self.quote, self.quote_partial_fields),
-            self.quote_partial_parsed
-        )
-
-    def test_parse_quote_no_fields(self):
-        """parse_quote should raise Exception with no specified fields."""
-        self.assertRaises(
-            Exception,
-            YahooQuote().parse_quote,
-            self.quote, self.quote_no_fields
-        )
 
 
 class ParseYahooCSVQuoteTestCase(unittest.TestCase):
