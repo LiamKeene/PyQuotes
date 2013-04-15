@@ -38,6 +38,14 @@ class YahooQuote(QuoteBase):
     using the YQL library.
 
     """
+    known_fields = {
+        'Name': ('Name', str),
+        'LastTradePriceOnly': ('Close', Decimal),
+        'StockExchange': ('Exchange', str),
+        'Symbol': ('Code', str),
+        'Volume': ('Volume', Decimal),
+    }
+
     def __init__(self, code, columns='*', defer=False):
         """Initialise a YahooQuote given the stock code.
 
@@ -65,29 +73,21 @@ class YahooQuote(QuoteBase):
         raised.
 
         """
-        known_fields = {
-            'Name': {'name': 'Name', 'type': str, },
-            'LastTradePriceOnly': {'name': 'Close', 'type': Decimal, },
-            'StockExchange': {'name': 'Exchange', 'type': str, },
-            'Symbol': {'name': 'Code', 'type': str, },
-            'Volume': {'name': 'Volume', 'type': Decimal, },
-        }
-
         # If querying all fields, just return the ones we have defined
         if self.columns == '*':
-            return known_fields
+            return self.known_fields
 
         output = {}
 
         for field in self.columns:
-            if not known_fields.has_key(field):
+            if not self.known_fields.has_key(field):
                 raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
 
             # Find field in our known fields
-            data = known_fields[field]
+            data_name, data_type = self.known_fields[field]
 
             # Add the field name and type to the output
-            output[field] = (data['name'], data['type'])
+            output[field] = (data_name, data_type)
 
         return output
 
@@ -167,6 +167,17 @@ class YahooCSVQuote(QuoteBase):
     """Represents a quote that is obtained via the Yahoo CSV API.
 
     """
+    known_symbols = {
+        'g': ('Low', Decimal),
+        'h': ('High', Decimal),
+        'l1': ('Close', Decimal),
+        'n': ('Name', str),
+        'o': ('Open', Decimal),
+        's': ('Code', str),
+        'v': ('Volume', Decimal),
+        'x': ('Exchange', str),
+    }
+
     def __init__(self, code, symbols='nsxl1', defer=False):
         """Initialise a YahooCSVQuote given the stock code.
 
@@ -195,28 +206,17 @@ class YahooCSVQuote(QuoteBase):
         raised.
 
         """
-        known_symbols = {
-            'g': {'name': 'Low', 'type': Decimal, },
-            'h': {'name': 'High', 'type': Decimal, },
-            'l1': {'name': 'Close', 'type': Decimal, },
-            'n': {'name': 'Name', 'type': str, },
-            'o': {'name': 'Open', 'type': Decimal, },
-            's': {'name': 'Code', 'type': str, },
-            'v': {'name': 'Volume', 'type': Decimal, },
-            'x': {'name': 'Exchange', 'type': str, },
-        }
-
         output = []
 
         for symbol in self.parsed_symbols:
-            if not known_symbols.has_key(symbol):
+            if not self.known_symbols.has_key(symbol):
                 raise NotImplementedError('Symbol: %s is not known or unhandled' % (symbol, ))
 
             # Find symbol in our known symbols
-            data = known_symbols[symbol]
+            data_name, data_type = self.known_symbols[symbol]
 
             # Add the field name and type to the output
-            output.append((data['name'], data['type']))
+            output.append((data_name, data_type))
 
         return tuple(output)
 
@@ -320,6 +320,15 @@ class YahooQuoteHistory(QuoteBase):
     Finance community table using the YQL library.
 
     """
+    known_fields = {
+        'Date': ('Date', parse_date),
+        'Open': ('Open', Decimal),
+        'High': ('High', Decimal),
+        'Low': ('Low', Decimal),
+        'Close': ('Close', Decimal),
+        'Volume': ('Volume', Decimal),
+    }
+
     def __init__(self, code, date_range, columns='*', defer=False):
         """Initialise a YahooQuoteHistory given the stock code and date range.
 
@@ -348,30 +357,21 @@ class YahooQuoteHistory(QuoteBase):
         raised.
 
         """
-        known_fields = {
-            'Date': {'name': 'Date', 'type': parse_date, },
-            'Open': {'name': 'Open', 'type': Decimal, },
-            'High': {'name': 'High', 'type': Decimal, },
-            'Low': {'name': 'Low', 'type': Decimal, },
-            'Close': {'name': 'Close', 'type': Decimal, },
-            'Volume': {'name': 'Volume', 'type': Decimal, },
-        }
-
         # If after all fields, just return the ones we have defined
         if self.columns == '*':
-            return known_fields
+            return self.known_fields
 
         output = {}
 
         for field in self.columns:
-            if not known_fields.has_key(field):
+            if not self.known_fields.has_key(field):
                 raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
 
             # Find field in our known fields
-            data = known_fields[field]
+            data_name, data_type = self.known_fields[field]
 
             # Add the field name and type to the output
-            output[field] = (data['name'], data['type'])
+            output[field] = (data_name, data_type)
 
         return output
 
@@ -475,6 +475,15 @@ class YahooCSVQuoteHistory(QuoteBase):
     CSV API.
 
     """
+    known_fields = {
+        'Date': ('Date', parse_date),
+        'Open': ('Open', Decimal),
+        'High': ('High', Decimal),
+        'Low': ('Low', Decimal),
+        'Close': ('Close', Decimal),
+        'Volume': ('Volume', Decimal),
+    }
+
     def __init__(self, code, date_range, columns='*', defer=False):
         """Initialise a YahooQuoteHistory given the stock code and date range.
 
@@ -503,30 +512,21 @@ class YahooCSVQuoteHistory(QuoteBase):
         raised.
 
         """
-        known_fields = {
-            'Date': {'name': 'Date', 'type': parse_date, },
-            'Open': {'name': 'Open', 'type': Decimal, },
-            'High': {'name': 'High', 'type': Decimal, },
-            'Low': {'name': 'Low', 'type': Decimal, },
-            'Close': {'name': 'Close', 'type': Decimal, },
-            'Volume': {'name': 'Volume', 'type': Decimal, },
-        }
-
         # If after all fields, just return the ones we have defined
         if self.columns== '*':
-            return known_fields
+            return self.known_fields
 
         output = {}
 
         for field in self.columns:
-            if not known_fields.has_key(field):
+            if not self.known_fields.has_key(field):
                 raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
 
             # Find field in our known fields
-            data = known_fields[field]
+            data_name, data_type = self.known_fields[field]
 
             # Add the field name and type to the output
-            output[field] = (data['name'], data['type'])
+            output[field] = (data_name, data_type)
 
         return output
 
