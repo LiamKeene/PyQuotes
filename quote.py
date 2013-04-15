@@ -317,7 +317,28 @@ class YahooQuoteHistory(QuoteBase):
     Finance community table using the YQL library.
 
     """
-    def get_raw_quote(self, code, date_range):
+    def __init__(self, code, date_range, columns='*', defer=False):
+        """Initialise a YahooQuoteHistory given the stock code and date range.
+
+        Optionally give a list of columns to include in the YQL query (default is
+        all columns `*`).
+
+        """
+        # Store the stock code and columns of data to fetch
+        self.code = code
+        self.date_range = date_range
+        self.columns = columns
+
+        # Default value of quote
+        self.fields = {}
+        self.raw_quote = None
+        self.quote = None
+
+        # Process quote or defer it for later
+        if not defer:
+            self.process_quote()
+
+    def get_raw_quote(self):
         """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
         Given the code of the stock and a list containing the start and end dates of
@@ -325,7 +346,7 @@ class YahooQuoteHistory(QuoteBase):
 
         """
         # Validate dates first
-        ret, date_range = validate_date_range(date_range)
+        ret, date_range = validate_date_range(self.date_range)
 
         if not ret:
             # raise exception or just quit - validate_date_range will raise an exceptions
@@ -346,7 +367,7 @@ class YahooQuoteHistory(QuoteBase):
             'where symbol = "%(code)s.%(exchange)s" ' \
             'and startDate = "%(start_date)s" and endDate = "%(end_date)s"' \
             % {
-                'code': code, 'exchange': exchange,
+                'code': self.code, 'exchange': exchange,
                 'start_date': start_date, 'end_date': end_date,
             }
         response = y.execute(query, env=env)
@@ -358,9 +379,9 @@ class YahooQuoteHistory(QuoteBase):
         # Get the quote
         quote = response.results['quote']
 
-        return True, quote
+        return quote
 
-    def get_quote_fields(self, fields):
+    def get_quote_fields(self):
         """Returns field names and types from given Yahoo YQL field names.
 
         Each field needs it's name and type defined otherwise an Exception is
@@ -376,9 +397,13 @@ class YahooQuoteHistory(QuoteBase):
             'Volume': {'name': 'Volume', 'type': Decimal, },
         }
 
+        # If after all fields, just return the ones we have defined
+        if self.columns == '*':
+            return known_fields
+
         output = {}
 
-        for field in fields:
+        for field in self.columns:
             if not known_fields.has_key(field):
                 raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
 
@@ -390,33 +415,48 @@ class YahooQuoteHistory(QuoteBase):
 
         return output
 
-    def parse_quote(self, get_raw_quote, field_dict):
+    def process_quote(self):
+        """Helper method to process a quote.
+
+        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
+
+        """
+        # Determine the field names and types
+        self.fields = self.get_quote_fields()
+
+        # Fetch the raw quote
+        self.raw_quote = self.get_raw_quote()
+
+        # Parse the raw quote with the field names and types
+        self.quote = self.parse_quote()
+
+    def parse_quote(self):
         """Parse the raw data from a Yahoo finance YQL historical quote into a
         dictionary of useful data.
 
         Given a dictionary containing the fields to include in the result.
 
         """
-        if field_dict == {} or field_dict is None:
+        if self.fields == {} or self.fields is None:
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
         output = []
 
         # Populate the output list with data dictionaries
-        for data in get_raw_quote:
+        for data in self.raw_quote:
 
             # Create dictionary for this data
             dic = {}
 
             for key, value in data.items():
                 # Ignore fields in data that are not in requested field dict
-                if not field_dict.has_key(key):
+                if not self.fields.has_key(key):
                     continue
                 # YQL historical quotes have superfluous 'date' field
                 if key == 'date':
                    continue
                 # Lookup data name and data type
-                data_name, data_type = field_dict[key]
+                data_name, data_type = self.fields[key]
 
                 # Apply the datatype
                 dic[data_name] = data_type(value)
