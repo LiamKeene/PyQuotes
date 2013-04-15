@@ -648,7 +648,54 @@ class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
         self.assertRaises(Exception, self.test_quote_no_fields.parse_quote)
 
 
-class RawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
+class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
+    """Test Case for the YahooCSVQuoteHistory model.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_columns = ['Date', 'High', 'Low', 'Close', 'Volume']
+        self.test_data = [
+            {
+                'Date': date(2013, 4, 12), 'High': Decimal('3.38'),
+                'Low': Decimal('3.31'), 'Close': Decimal('3.33'),
+                'Volume': Decimal('1351200'),
+            },
+            {
+                'Date': date(2013, 4, 11), 'High': Decimal('3.41'),
+                'Low': Decimal('3.33'), 'Close': Decimal('3.34'),
+                'Volume': Decimal('1225300'),
+            },
+            {
+                'Date': date(2013, 4, 10), 'High': Decimal('3.41'),
+                'Low': Decimal('3.38'), 'Close': Decimal('3.40'),
+                'Volume': Decimal('2076700'),
+            },
+        ]
+
+    def test_quote_good_code(self):
+        """YahooCSVQuoteHistory should create a new quote object, fetch a quote and parse it."""
+        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates, self.test_columns)
+
+        # Check we got a raw quote
+        self.assertTrue(quote.raw_quote is not None)
+
+        # Check the quote has been parsed
+        self.assertEqual(quote.quote, self.test_data)
+
+    def test_quote_deferred(self):
+        """YahooCSVQuoteHistory should defer fetching and parsing of quote if required."""
+        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates, self.test_columns, defer=True)
+
+        # Check quote is unprocessed
+        self.assertEqual(quote.fields, {})
+        self.assertTrue(quote.raw_quote is None)
+        self.assertTrue(quote.quote is None)
+
+
+class GetRawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
     """The `YahooCSVQuoteHistory`.`get_raw_quote` function should query Yahoo's finance CSV
     API and return the historical quote data for a particular stock over a given
     date range.
@@ -660,28 +707,93 @@ class RawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-
+        self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
+        self.test_data = [
+            {
+                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38',
+                'Low': '3.31', 'Close': '3.33', 'Volume': '1351200',
+                'Adj_Close': '3.33', 'date': '2013-04-12',
+            },
+            {
+                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41',
+                'Low': '3.33', 'Close': '3.34', 'Volume': '1225300',
+                'Adj_Close': '3.34', 'date': '2013-04-11',
+            },
+            {
+                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41',
+                'Low': '3.38', 'Close': '3.40', 'Volume': '2076700',
+                'Adj_Close': '3.40', 'date': '2013-04-10',
+            }
+        ]
 
-    def test_csv_history_good_code(self):
+        self.test_good_quote = YahooCSVQuoteHistory(
+            self.test_code, self.test_dates, defer=True
+        )
+
+    def test_history_good_code(self):
         """get_raw_quote should return True given a valid code."""
-        ret, quotes = YahooCSVQuoteHistory().get_raw_quote(self.good_code, self.test_dates)
-        self.assertTrue(ret)
+        raw_quote = self.test_good_quote.get_raw_quote()
 
         # This would ideally be done in another function
-        quotes = quotes.split('\n')
+        quotes = raw_quote.split('\n')
         # Remove the headers
         quotes.pop(0)
         # Remove empty elements
         quotes.remove('')
 
-        # Check the length and content of the quotes
-        self.assertEqual(len(quotes), len(self.test_date_range))
+        self.assertEqual(len(quotes), len(self.test_data))
         for i in range(len(quotes)):
             quote = quotes[i].split(',')
             self.assertEqual(quote[0], self.test_date_range[i])
+
+
+class GetYahooCSVQuoteHistoryFieldsTestCase(unittest.TestCase):
+    """Test Case for the `get_quote_fields` function.
+
+    The `get_quote_fields` function should return a dictionary of
+    two-tuples that contain the output field names and data type given the quote
+    field names.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_columns = ['Date', 'High', 'Low', 'Close', 'Volume']
+        self.test_quote = YahooCSVQuoteHistory(
+            self.test_code, self.test_dates, self.test_columns, defer=True
+        )
+        self.test_fields = {
+            'Date': ('Date', parse_date), 'High': ('High', Decimal),
+            'Low': ('Low', Decimal), 'Close': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+
+        self.test_get_all_fields = '*'
+        self.test_quote_all_fields = YahooCSVQuoteHistory(
+            self.test_code, self.test_dates, defer=True
+        )
+
+        self.test_unknown_fields = ['RandomField', ]
+        self.test_quote_unknown_fields = YahooCSVQuoteHistory(
+            self.test_code, self.test_dates, self.test_unknown_fields, defer=True
+        )
+
+    def test_get_quote_fields(self):
+        """get_quote_fields should return dictionary of tuples of field names."""
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_fields)
+
+    def test_get_all_fields(self):
+        """get_quote_fields should return dictionary of tuples of all field names."""
+        field_dict = self.test_quote_all_fields.get_quote_fields()
+
+        self.assertTrue(isinstance(field_dict, dict))
+        self.assertTrue(len(field_dict.keys()) > 0)
+
+    def test_unknown_fields(self):
+        """get_quote_fields should raise Exception if the field is unknown."""
+        self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
 
 
 class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
@@ -691,48 +803,60 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
     """
     def setUp(self):
         # The CSV historical quote has defined headers (the first row of CSV data)
-        self.csv_quote_history = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
+        self.test_code = 'ABC'
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10', ]
+        self.test_columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume',]
+
+        self.test_quote = YahooCSVQuoteHistory(
+            self.test_code, self.test_date_range, self.test_columns, defer=True
+        )
+        self.test_quote_partial = YahooCSVQuoteHistory(
+            self.test_code, self.test_date_range, self.test_columns, defer=True
+        )
+        self.test_quote_no_fields = YahooCSVQuoteHistory(
+            self.test_code, self.test_date_range, self.test_columns, defer=True
+        )
+
+        # Explicitly set the quote fields and raw quote (is this a good idea?)
+        self.test_quote.fields = {
+            'Date': ('Date', parse_date), 'Open': ('Open', Decimal),
+            'High': ('High', Decimal), 'Low': ('Low', Decimal),
+            'Close': ('Close', Decimal), 'Volume': ('Volume', Decimal),
+        }
+        self.test_quote.raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
             '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
             '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
             '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
 
-        # The CSV quote fields
-        self.csv_quote_history_fields = {
-            'Date': ('Date', parse_date), 'Open': ('Open', Decimal),
-            'High': ('High', Decimal), 'Low': ('Low', Decimal),
-            'Close': ('Close', Decimal), 'Adj Close': ('Adj Close', Decimal),
-            'Volume': ('Volume', Decimal),
-        }
-        # A partial set of fields to return
-        self.csv_quote_history_partial_fields = {
-            'Date': ('Date', parse_date), 'Close': ('Close', Decimal),
-            'Volume': ('Volume', Decimal),
-        }
-        # Don't ask to parse anything - raises Exception
-        self.csv_quote_history_no_fields = {}
-
-        self.csv_quote_history_parsed = [
+        # The parsed quote
+        self.test_parsed_quote = [
             {
                 'Date': date(2013, 4, 12), 'Open': Decimal('3.36'),
                 'High': Decimal('3.38'), 'Low': Decimal('3.31'),
-                'Close': Decimal('3.33'), 'Adj Close': Decimal('3.33'),
-                'Volume': Decimal('1351200'),
+                'Close': Decimal('3.33'), 'Volume': Decimal('1351200'),
             },
             {
                 'Date': date(2013, 4, 11), 'Open': Decimal('3.39'),
                 'High': Decimal('3.41'), 'Low': Decimal('3.33'),
-                'Close': Decimal('3.34'), 'Adj Close': Decimal('3.34'),
-                'Volume': Decimal('1225300'),
+                'Close': Decimal('3.34'), 'Volume': Decimal('1225300'),
             },
             {
                 'Date': date(2013, 4, 10), 'Open': Decimal('3.39'),
                 'High': Decimal('3.41'), 'Low': Decimal('3.38'),
-                'Close': Decimal('3.40'), 'Adj Close': Decimal('3.40'),
-                'Volume': Decimal('2076700'),
+                'Close': Decimal('3.40'), 'Volume': Decimal('2076700'),
             },
         ]
 
-        self.csv_quote_history_partial_parsed = [
+        # Only parse parts of the quote
+        self.test_quote_partial.fields = {
+            'Date': ('Date', parse_date), 'Close': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+        self.test_quote_partial.raw_quote = self.test_quote.raw_quote
+
+        # The partially parsed quote
+        self.test_parsed_quote_partial = [
             {
                 'Date': date(2013, 4, 12), 'Close': Decimal('3.33'),
                 'Volume': Decimal('1351200'),
@@ -747,28 +871,25 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
             },
         ]
 
+        # Don't ask to parse anything - raises Exception
+        self.quote_history_no_fields = {}
+        self.test_quote_no_fields.raw_quote = self.test_quote.raw_quote
 
-    def test_parse_yahoo_csv_quote_history(self):
-        """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
-        self.assertEqual(
-            YahooCSVQuoteHistory().parse_quote(self.csv_quote_history, self.csv_quote_history_fields),
-            self.csv_quote_history_parsed
-        )
+    def test_parse_quote(self):
+        """parse_quote should be able to parse quote."""
+        parsed_quote = self.test_quote.parse_quote()
 
-    def test_parse_yahoo_csv_quote_history_partial(self):
-        """parse_yahoo_csv_quote_history should be able to parse CSV historical quotes."""
-        self.assertEqual(
-            YahooCSVQuoteHistory().parse_quote(self.csv_quote_history, self.csv_quote_history_partial_fields),
-            self.csv_quote_history_partial_parsed
-        )
+        self.assertEqual(parsed_quote, self.test_parsed_quote)
 
-    def test_parse_yahoo_csv_quote_history_no_fields(self):
-        """parse_yahoo_csv_quote_history should raise Exception with no specified fields."""
-        self.assertRaises(
-            Exception,
-            YahooCSVQuoteHistory().parse_quote,
-            self.csv_quote_history, self.csv_quote_history_no_fields
-        )
+    def test_parse_quote_partial(self):
+        """parse_quote should be able to parse quote."""
+        parsed_quote = self.test_quote_partial.parse_quote()
+
+        self.assertEqual(parsed_quote, self.test_parsed_quote_partial)
+
+    def test_parse_quote_no_fields(self):
+        """parse_quote should raise Exception with no specified fields."""
+        self.assertRaises(Exception, self.test_quote_no_fields.parse_quote)
 
 
 class ValidateDateRangeTestCase(unittest.TestCase):
