@@ -13,28 +13,42 @@ class YahooQuoteTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-        self.bad_code = 'A'
+        self.test_code = 'ABC'
 
-        self.columns = ['Name', 'Symbol', 'StockExchange', ]
-        self.data = [u'ADEL BRTN FPO', u'ABC.AX', u'ASX', ]
-        self.data_dict = dict(zip(self.columns, self.data))
+        self.test_columns = ['Name', 'Symbol', 'StockExchange', ]
+
+        # Expected raw quote
+        self.test_raw_quote = {
+            'Name': u'ADEL BRTN FPO', 'Symbol': u'ABC.AX', 'StockExchange': u'ASX',
+            'ErrorIndicationreturnedforsymbolchangedinvalid': None,
+        }
+
+        # Expected parsed quote
+        self.test_parsed_quote = {
+            'Name': u'ADEL BRTN FPO', 'Code': u'ABC.AX', 'Exchange': u'ASX',
+        }
 
     def test_quote_good_code(self):
         """YahooQuote should create a new quote object, fetch a quote and parse it."""
-        quote = YahooQuote(self.good_code, self.columns)
+        quote = YahooQuote(self.test_code)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
 
-        # Check the quote has been parsed
-        for key, value in quote.quote.items():
-            self.assertTrue(key in quote.quote)
-            self.assertEqual(quote.quote[key], value)
+        # Check we got a parsed quote
+        self.assertTrue(quote.quote is not None)
+
+    def test_quote_columns(self):
+        """YahooQuote should create a new quote object, fetch and parse given columns."""
+        quote = YahooQuote(self.test_code, self.test_columns)
+
+        self.assertEqual(quote.raw_quote, self.test_raw_quote)
+
+        self.assertEqual(quote.quote, self.test_parsed_quote)
 
     def test_quote_deferred(self):
         """YahooQuote should defer fetching and parsing of quote if required."""
-        quote = YahooQuote(self.good_code, self.columns, defer=True)
+        quote = YahooQuote(self.test_code, self.test_columns, defer=True)
 
         # Check quote is unprocessed
         self.assertEqual(quote.fields, {})
@@ -77,6 +91,8 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
         """get_quote_fields should return dictionary of tuples of all field names."""
         field_dict = self.test_quote_all_fields.get_quote_fields()
 
+        # Because the number of fields in the YQL quote is high, difficult to check
+        # with predefined ones in a test case.
         self.assertTrue(isinstance(field_dict, dict))
         self.assertTrue(len(field_dict.keys()) > 0)
 
@@ -97,8 +113,12 @@ class GetRawYahooQuoteTestCase(unittest.TestCase):
         self.bad_code = 'A'
 
         self.columns = ['Name', 'Symbol', 'StockExchange', ]
-        self.data = [u'ADEL BRTN FPO', u'ABC.AX', u'ASX', ]
-        self.data_dict = dict(zip(self.columns, self.data))
+
+        # Expected raw quote
+        self.test_raw_quote = {
+            'Name': u'ADEL BRTN FPO', 'Symbol': u'ABC.AX', 'StockExchange': u'ASX',
+            'ErrorIndicationreturnedforsymbolchangedinvalid': None,
+        }
 
         self.test_good_quote = YahooQuote(self.good_code, defer=True)
 
@@ -110,6 +130,8 @@ class GetRawYahooQuoteTestCase(unittest.TestCase):
         """get_raw_quote should return True given a valid code."""
         raw_quote = self.test_good_quote.get_raw_quote()
 
+        # Because the number of fields in the YQL quote is high, difficult to check
+        # with predefined ones in a test case.
         self.assertTrue(raw_quote is not None)
 
     def test_quote_bad_code(self):
@@ -118,11 +140,7 @@ class GetRawYahooQuoteTestCase(unittest.TestCase):
 
     def test_quote_get_columns(self):
         """get_raw_quote should return the requested column only."""
-        raw_quote = self.test_quote_columns.get_raw_quote()
-
-        for key, value in self.data_dict.items():
-            self.assertTrue(key in raw_quote)
-            self.assertEqual(raw_quote[key], self.data_dict[key])
+        self.assertEqual(self.test_quote_columns.get_raw_quote(), self.test_raw_quote)
 
 
 class ParseYahooQuoteTestCase(unittest.TestCase):
@@ -172,19 +190,11 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
 
     def test_parse_quote(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote.parse_quote()
-
-        for key, value in self.test_parsed_quote.items():
-            self.assertTrue(key in parsed_quote)
-            self.assertEqual(parsed_quote[key], value)
+        self.assertEqual(self.test_quote.parse_quote(), self.test_parsed_quote)
 
     def test_parse_quote_partial(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote_partial.parse_quote()
-
-        for key, value in self.test_parsed_quote_partial.items():
-            self.assertTrue(key in parsed_quote)
-            self.assertEqual(parsed_quote[key], value)
+        self.assertEqual(self.test_quote_partial.parse_quote(), self.test_parsed_quote_partial)
 
     def test_parse_quote_no_fields(self):
         """parse_quote should raise Exception with no specified fields."""
@@ -196,29 +206,39 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-        self.bad_code = 'A'
+        self.test_code = 'ABC'
 
-        self.symbols = 'nsx'
-        self.data_dict = {
-            'Name': u'ADEL BRTN FPO', 'Symbol': u'ABC.AX', 'StockExchange': u'ASX',
+        self.test_symbols = 'nsx'
+
+        # Expected raw quote
+        self.test_raw_quote = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
+
+        # Expected parsed quote
+        self.test_parsed_quote = {
+            'Name': u'ADEL BRTN FPO', 'Code': u'ABC.AX', 'Exchange': u'ASX',
         }
 
     def test_quote_good_code(self):
         """YahooCSVQuote should create a new quote object, fetch a quote and parse it."""
-        quote = YahooCSVQuote(self.good_code, self.symbols)
+        quote = YahooCSVQuote(self.test_code)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
 
-        # Check the quote has been parsed
-        for key, value in quote.quote.items():
-            self.assertTrue(key in quote.quote)
-            self.assertEqual(quote.quote[key], value)
+        # Check we got a parsed quote
+        self.assertTrue(quote.quote is not None)
+
+    def test_quote_columns(self):
+        """YahooCSVQuote should create a new quote object, fetch and parse given columns."""
+        quote = YahooCSVQuote(self.test_code, self.test_symbols)
+
+        self.assertEqual(quote.raw_quote, self.test_raw_quote)
+
+        self.assertEqual(quote.quote, self.test_parsed_quote)
 
     def test_quote_deferred(self):
         """YahooCSVQuote should defer fetching and parsing of quote if required."""
-        quote = YahooCSVQuote(self.good_code, self.symbols, defer=True)
+        quote = YahooCSVQuote(self.test_code, self.test_symbols, defer=True)
 
         # Check quote is unprocessed
         self.assertEqual(quote.fields, ())
@@ -341,19 +361,11 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
 
     def test_parse_quote(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote.parse_quote()
-
-        for key, value in self.test_parsed_quote.items():
-            self.assertTrue(key in parsed_quote)
-            self.assertEqual(parsed_quote[key], value)
+        self.assertEqual(self.test_quote.parse_quote(), self.test_parsed_quote)
 
     def test_parse_quote_partial(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote_partial.parse_quote()
-
-        for key, value in self.test_parsed_quote_partial.items():
-            self.assertTrue(key in parsed_quote)
-            self.assertEqual(parsed_quote[key], value)
+        self.assertEqual(self.test_quote_partial.parse_quote(), self.test_parsed_quote_partial)
 
     def test_parse_quote_no_fields(self):
         """parse_quote should raise Exception with no specified fields."""
@@ -390,6 +402,8 @@ class GetRawYahooCSVQuoteTestCase(unittest.TestCase):
         """get_raw_quote should return True given a valid code."""
         raw_quote = self.test_good_quote.get_raw_quote()
 
+        # Because the number of fields in the CSV quote is high, difficult to check
+        # with predefined ones in a test case.
         self.assertTrue(raw_quote is not None)
 
     def test_csv_quote_bad_code(self):
@@ -399,6 +413,7 @@ class GetRawYahooCSVQuoteTestCase(unittest.TestCase):
     def test_csv_quote_get_columns(self):
         """get_raw_quote should return the requested columns only."""
         raw_quote = self.test_quote_columns.get_raw_quote()
+
         self.assertEqual(raw_quote, self.csv_data)
 
 
@@ -410,37 +425,60 @@ class YahooQuoteHistoryTestCase(unittest.TestCase):
         self.test_code = 'ABC'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_columns = ['Date', 'High', 'Low', 'Close', 'Volume']
-        self.test_data = [
+        self.test_columns = ['Date', 'Close', 'Volume']
+        self.test_raw_quote = [
             {
-                'Date': date(2013, 4, 12), 'High': Decimal('3.38'),
-                'Low': Decimal('3.31'), 'Close': Decimal('3.33'),
+                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38',
+                'Low': '3.31', 'Close': '3.33', 'Volume': '1351200',
+                'Adj_Close': '3.33', 'date': '2013-04-12',
+            },
+            {
+                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41',
+                'Low': '3.33', 'Close': '3.34', 'Volume': '1225300',
+                'Adj_Close': '3.34', 'date': '2013-04-11',
+            },
+            {
+                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41',
+                'Low': '3.38', 'Close': '3.40', 'Volume': '2076700',
+                'Adj_Close': '3.40', 'date': '2013-04-10',
+            }
+        ]
+
+        self.test_parsed_quote = [
+            {
+                'Date': date(2013, 4, 12), 'Close': Decimal('3.33'),
                 'Volume': Decimal('1351200'),
             },
             {
-                'Date': date(2013, 4, 11), 'High': Decimal('3.41'),
-                'Low': Decimal('3.33'), 'Close': Decimal('3.34'),
+                'Date': date(2013, 4, 11), 'Close': Decimal('3.34'),
                 'Volume': Decimal('1225300'),
             },
             {
-                'Date': date(2013, 4, 10), 'High': Decimal('3.41'),
-                'Low': Decimal('3.38'), 'Close': Decimal('3.40'),
+                'Date': date(2013, 4, 10), 'Close': Decimal('3.40'),
                 'Volume': Decimal('2076700'),
             },
         ]
 
     def test_quote_good_code(self):
         """YahooQuoteHistory should create a new quote object, fetch a quote and parse it."""
-        quote = YahooQuoteHistory(self.test_code, self.test_dates, self.test_columns)
+        quote = YahooQuoteHistory(self.test_code, self.test_dates)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
 
-        # Check the quote has been parsed
-        self.assertEqual(quote.quote, self.test_data)
+        # Check we got a parsed quote
+        self.assertTrue(quote.quote is not None)
+
+    def test_quote_columns(self):
+        """YahooQuoteHistory should create a new quote object, fetch and parse given columns."""
+        quote = YahooQuoteHistory(self.test_code, self.test_dates, self.test_columns)
+
+        self.assertEqual(quote.raw_quote, self.test_raw_quote)
+
+        self.assertEqual(quote.quote, self.test_parsed_quote)
 
     def test_quote_deferred(self):
-        """YahooQuote should defer fetching and parsing of quote if required."""
+        """YahooQuoteHistory should defer fetching and parsing of quote if required."""
         quote = YahooQuoteHistory(self.test_code, self.test_dates, self.test_columns, defer=True)
 
         # Check quote is unprocessed
@@ -486,10 +524,7 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
 
     def test_get_all_fields(self):
         """get_quote_fields should return dictionary of tuples of all field names."""
-        field_dict = self.test_quote_all_fields.get_quote_fields()
-
-        self.assertTrue(isinstance(field_dict, dict))
-        self.assertTrue(len(field_dict.keys()) > 0)
+        self.assertEqual(self.test_quote_all_fields.get_quote_fields(), self.test_quote.known_fields)
 
     def test_unknown_fields(self):
         """get_quote_fields should raise Exception if the field is unknown."""
@@ -511,7 +546,7 @@ class GetRawYahooQuoteHistoryTestCase(unittest.TestCase):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
-        self.test_data = [
+        self.test_raw_quote = [
             {
                 'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38',
                 'Low': '3.31', 'Close': '3.33', 'Volume': '1351200',
@@ -537,9 +572,7 @@ class GetRawYahooQuoteHistoryTestCase(unittest.TestCase):
         """get_raw_quote should return True given a valid code."""
         raw_quote = self.test_good_quote.get_raw_quote()
 
-        self.assertEqual(len(raw_quote), len(self.test_data))
-        for i in range(len(raw_quote)):
-            self.assertEqual(raw_quote[i], self.test_data[i])
+        self.assertEqual(raw_quote, self.test_raw_quote)
 
 
 class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
@@ -634,15 +667,11 @@ class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
 
     def test_parse_quote(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote.parse_quote()
-
-        self.assertEqual(parsed_quote, self.test_parsed_quote)
+        self.assertEqual(self.test_quote.parse_quote(), self.test_parsed_quote)
 
     def test_parse_quote_partial(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote_partial.parse_quote()
-
-        self.assertEqual(parsed_quote, self.test_parsed_quote_partial)
+        self.assertEqual(self.test_quote_partial.parse_quote(), self.test_parsed_quote_partial)
 
     def test_parse_quote_no_fields(self):
         """parse_quote should raise Exception with no specified fields."""
@@ -657,34 +686,43 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
         self.test_code = 'ABC'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_columns = ['Date', 'High', 'Low', 'Close', 'Volume']
-        self.test_data = [
+        self.test_columns = ['Date', 'Close', 'Volume']
+        self.test_raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
+            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
+            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
+            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
+        self.test_parsed_quote = [
             {
-                'Date': date(2013, 4, 12), 'High': Decimal('3.38'),
-                'Low': Decimal('3.31'), 'Close': Decimal('3.33'),
+                'Date': date(2013, 4, 12), 'Close': Decimal('3.33'),
                 'Volume': Decimal('1351200'),
             },
             {
-                'Date': date(2013, 4, 11), 'High': Decimal('3.41'),
-                'Low': Decimal('3.33'), 'Close': Decimal('3.34'),
+                'Date': date(2013, 4, 11), 'Close': Decimal('3.34'),
                 'Volume': Decimal('1225300'),
             },
             {
-                'Date': date(2013, 4, 10), 'High': Decimal('3.41'),
-                'Low': Decimal('3.38'), 'Close': Decimal('3.40'),
+                'Date': date(2013, 4, 10), 'Close': Decimal('3.40'),
                 'Volume': Decimal('2076700'),
             },
         ]
 
     def test_quote_good_code(self):
         """YahooCSVQuoteHistory should create a new quote object, fetch a quote and parse it."""
-        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates, self.test_columns)
+        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
 
-        # Check the quote has been parsed
-        self.assertEqual(quote.quote, self.test_data)
+        # Check we got a parsed quote
+        self.assertTrue(quote.quote is not None)
+
+    def test_quote_columns(self):
+        """YahooCSVQuoteHistory should create a new quote object, fetch and parse given columns."""
+        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates, self.test_columns)
+
+        self.assertEqual(quote.raw_quote, self.test_raw_quote)
+
+        self.assertEqual(quote.quote, self.test_parsed_quote)
 
     def test_quote_deferred(self):
         """YahooCSVQuoteHistory should defer fetching and parsing of quote if required."""
@@ -711,43 +749,20 @@ class GetRawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
-        self.test_data = [
-            {
-                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38',
-                'Low': '3.31', 'Close': '3.33', 'Volume': '1351200',
-                'Adj_Close': '3.33', 'date': '2013-04-12',
-            },
-            {
-                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41',
-                'Low': '3.33', 'Close': '3.34', 'Volume': '1225300',
-                'Adj_Close': '3.34', 'date': '2013-04-11',
-            },
-            {
-                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41',
-                'Low': '3.38', 'Close': '3.40', 'Volume': '2076700',
-                'Adj_Close': '3.40', 'date': '2013-04-10',
-            }
-        ]
+        self.test_raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
+            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
+            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
+            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
 
-        self.test_good_quote = YahooCSVQuoteHistory(
+        self.test_quote = YahooCSVQuoteHistory(
             self.test_code, self.test_dates, defer=True
         )
 
     def test_history_good_code(self):
         """get_raw_quote should return True given a valid code."""
-        raw_quote = self.test_good_quote.get_raw_quote()
+        raw_quote = self.test_quote.get_raw_quote()
 
-        # This would ideally be done in another function
-        quotes = raw_quote.split('\n')
-        # Remove the headers
-        quotes.pop(0)
-        # Remove empty elements
-        quotes.remove('')
-
-        self.assertEqual(len(quotes), len(self.test_data))
-        for i in range(len(quotes)):
-            quote = quotes[i].split(',')
-            self.assertEqual(quote[0], self.test_date_range[i])
+        self.assertEqual(raw_quote, self.test_raw_quote)
 
 
 class GetYahooCSVQuoteHistoryFieldsTestCase(unittest.TestCase):
@@ -787,10 +802,7 @@ class GetYahooCSVQuoteHistoryFieldsTestCase(unittest.TestCase):
 
     def test_get_all_fields(self):
         """get_quote_fields should return dictionary of tuples of all field names."""
-        field_dict = self.test_quote_all_fields.get_quote_fields()
-
-        self.assertTrue(isinstance(field_dict, dict))
-        self.assertTrue(len(field_dict.keys()) > 0)
+        self.assertEqual(self.test_quote_all_fields.get_quote_fields(), self.test_quote.known_fields)
 
     def test_unknown_fields(self):
         """get_quote_fields should raise Exception if the field is unknown."""
@@ -878,15 +890,11 @@ class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
 
     def test_parse_quote(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote.parse_quote()
-
-        self.assertEqual(parsed_quote, self.test_parsed_quote)
+        self.assertEqual(self.test_quote.parse_quote(), self.test_parsed_quote)
 
     def test_parse_quote_partial(self):
         """parse_quote should be able to parse quote."""
-        parsed_quote = self.test_quote_partial.parse_quote()
-
-        self.assertEqual(parsed_quote, self.test_parsed_quote_partial)
+        self.assertEqual(self.test_quote_partial.parse_quote(), self.test_parsed_quote_partial)
 
     def test_parse_quote_no_fields(self):
         """parse_quote should raise Exception with no specified fields."""
