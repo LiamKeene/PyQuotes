@@ -56,6 +56,23 @@ class YahooQuoteTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
+class YahooQuoteParseDateTestCase(unittest.TestCase):
+    """Test Case for the YahooQuote.parse_date function.
+
+    """
+    def setUp(self):
+        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_raw_date = '10/04/2013'
+        self.test_parsed_date = date(2013, 4, 10)
+
+    def test_parse_date(self):
+        """parse_date should parse a Yahoo YQL date correctly."""
+        self.assertEqual(
+            self.test_quote.parse_date(self.test_raw_date),
+            self.test_parsed_date
+        )
+
+
 class GetYahooQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `YahooQuote`.`get_quote_fields` function.
 

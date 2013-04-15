@@ -7,55 +7,50 @@ PyQuotes queries the Yahoo YQL Community tables to get a stock quote.
 ## Usage
 Currently only querying Australian stocks is supported.
 
-### Obtaining Quotes
+Quotes can be obtained from Yahoo's YQL and CSV APIs.
 
-To get the latest quote (delayed by 20min) for a company ABC use the following
-command.
+To get a single quote for a company 'ABC' (delayed by 20min) you can use the quote objects
+```YahooQuote``` and ```YahooCSVQuote```.
 ```python
->>> get_yahoo_quote('ABC')
-(True, {u'YearLow': u'2.730', u'OneyrTargetPrice': u'3.490', ... })
+>>> quote = YahooQuote('ABC')           # Quote from YQL API
+>>> csv_quote = YahooCSVQuote('ABC')    # Quote from CSV API
 ```
-This returns all the information in the table.
 
-To get a subset of columns of the latest quote (delayed by 20min) for a company
-ABC use the following command.
+To get a set of historical quotes given a date range you can use the quote objects
+```YahooQuoteHistory``` and ```YahooCSVQuoteHistory```.
 ```python
->>> quote.get_yahoo_quote('ABC', ['Symbol', 'LastTradePriceOnly', ])
-(True, {u'ErrorIndicationreturnedforsymbolchangedinvalid': None,
-u'Symbol': u'ABC.AX', u'LastTradePriceOnly': u'3.310'})
+>>> history = YahooQuoteHistory('ABC', ['2013-04-10', '2013-04-12'])        # Historical quotes from YQL API
+>>> csv_history = YahooCSVQuoteHistory('ABC', ['2013-04-10', '2013-04-12']) # Historical quotes from CSV API
 ```
-The very long key in the dictionary is returned in all queries to check that the
-given symbol (stock code) was valid.
 
-You can also request historical prices for a stock using the command.
+The quote objects fetch and parse the quote data.  An optional list of columns
+to be used in the query can be added to the quote constructors.
+
+The ```raw_quote``` attribute contains the quote as it is returned from the API,
+and the ```quote``` attribute contains the parsed quote.
 ```python
->>> quote.get_yahoo_quote_history('ABC', ['2013-04-10', '2013-04-12'])
-(True, [{u'Date': u'2013-04-12', u'Close': u'3.33', ...},
-{u'Date': u'2013-04-11', u'Close': u'3.34', ...},
-{u'Date': u'2013-04-10', u'Close': u'3.40', ...}])
+>>> quote.raw_quote
+{u'YearLow': u'2.730', u'OneyrTargetPrice': u'3.490', u'DividendShare': u'0.165', ...}
+>>> quote.quote
+{'Volume': Decimal('2064145'), 'Close': Decimal('3.310'), 'Code': 'ABC.AX', 'Name': 'ADEL BRTN FPO', 'Exchange': 'ASX'}
 ```
-The returned quote contains an array with a dictionary of data for each day in
-the specified date range.
 
-Quotes may also be obtained using Yahoo's CSV API, which can be more reliable
-than the YQL API.  The functions are ```get_yahoo_csv_quote``` and
-```get_yahoo_csv_history```.  The ```get_yahoo_csv_quote``` function takes a
-string of symbols that correspond to the data to return.  These symbols can be
-found at http://www.jarloo.com/yahoo_finance/.
+The quote is only parsed according to fields that have had their quote field name and field type
+defined.  This information is in the `known_fields` class attribute in each quote class.
 
-### Parsing Quotes
-The Yahoo CSV Quotes output raw strings of data, which can be parsed into more
-manageable formats using the ```parse_yahoo_quote``` and ```parse_yahoo_history```
-functions.
-
+From the ```YahooQuote``` class.
 ```python
->>> quote = get_yahoo_csv_quote_history('ABC', ['2013-04-10', '2013-04-12'])
->>> parse_yahoo_history(quote[1]) # The first element is a boolean for quote success
-(['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Adj Close'],
-[['2013-04-12', '3.36', '3.38', '3.31', '3.33', '1351200', '3.33'],
-['2013-04-11', '3.39', '3.41', '3.33', '3.34', '1225300', '3.34'],
-['2013-04-10', '3.39', '3.41', '3.38', '3.40', '2076700', '3.40']])
+known_fields = {
+    'Name': ('Name', str),
+    'LastTradePriceOnly': ('Close', Decimal),
+    'StockExchange': ('Exchange', str),
+    'Symbol': ('Code', str),
+    'Volume': ('Volume', Decimal),
+}
 ```
+This dictionary specifies that the ```LastTradePriceOnly``` column in the raw
+quote should be mapped to the ```Close``` field in the output and converted to
+a ```Decimal```.  Other quote classes contain similar dictionaries.
 
 ## Author
 **Liam Keene**

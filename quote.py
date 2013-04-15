@@ -1,7 +1,9 @@
 import csv
+import re
 import urllib2
 import yql
 
+from datetime import date
 from decimal import Decimal
 
 from functions import parse_date, validate_date_range
@@ -125,6 +127,26 @@ class YahooQuote(QuoteBase):
             return quote
 
         raise Exception(error)
+
+    @staticmethod
+    def parse_date(value):
+        """Parses a string and return a datetime.date.
+
+        Raises ValueError if the input is well formatted but not a valid date.
+        Returns None if the input isn't well formatted.
+
+        Based on django.utils.dateparse.parse_date, but to a different spec that
+        is customised for the Yahoo YQL data.  Yahoo YQL data returns dates in
+        %m/%d/%Y format.
+
+        """
+        date_re = re.compile(
+            r'(?P<month>\d{1,2})\/(?P<day>\d{1,2})\/(?P<year>\d{4})$'
+        )
+        match = date_re.match(value)
+        if match:
+            kw = dict((k, int(v)) for k, v in match.groupdict().items())
+            return date(**kw)
 
     def parse_quote(self):
         """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
