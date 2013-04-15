@@ -164,14 +164,35 @@ class YahooCSVQuote(QuoteBase):
     """Represents a quote that is obtained via the Yahoo CSV API.
 
     """
-    def get_raw_quote(self, code, symbols='nsxl1'):
+    def __init__(self, code, symbols='nsxl1', defer=False):
+        """Initialise a YahooCSVQuote given the stock code.
+
+        Optionally give a list of symbols to include in the CSV Url (default is
+        `nsxl1`).
+
+        """
+        # Store the stock code and columns of data to fetch
+        self.code = code
+        self.symbols = symbols
+
+        # Default value of quote
+        self.parsed_symbols = ()
+        self.fields = ()
+        self.raw_quote = None
+        self.quote = None
+
+        # Process quote or defer it for later
+        if not defer:
+            self.process_quote()
+
+    def get_raw_quote(self):
         """Get a quote from the Yahoo Finance CSV API and return the result.
 
         Given the code of the stock and an optional list of symbols that correspond
         to types of data to get in the quote.
 
         """
-        if not len(code) == 3:
+        if not len(self.code) == 3:
             raise Exception('Stock code appears incorrect')
 
         # Only interested in Australian equities at the moment
@@ -180,16 +201,16 @@ class YahooCSVQuote(QuoteBase):
         quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
             '?s=%(code)s.%(exchange)s&f=%(symbols)s' \
             % {
-                'code': code, 'exchange': exchange, 'symbols': symbols,
+                'code': self.code, 'exchange': exchange, 'symbols': self.symbols,
             }
 
         response = urllib2.urlopen(quote_url)
 
         quote = response.read()
 
-        return True, quote
+        return quote
 
-    def get_quote_fields(self, symbols):
+    def get_quote_fields(self):
         """Returns field names and types from given Yahoo CSV symbols.
 
         Each symbol needs it's name and type defined otherwise an Exception is
@@ -209,7 +230,7 @@ class YahooCSVQuote(QuoteBase):
 
         output = []
 
-        for symbol in symbols:
+        for symbol in self.parsed_symbols:
             if not known_symbols.has_key(symbol):
                 raise NotImplementedError('Symbol: %s is not known or unhandled' % (symbol, ))
 
@@ -221,7 +242,7 @@ class YahooCSVQuote(QuoteBase):
 
         return tuple(output)
 
-    def parse_symbols(self, symbols):
+    def parse_symbols(self):
         """Parse a string of Yahoo CSV symbols and return them as a tuple.
 
         This is required as the symbols are either single letters or a letter and
@@ -229,7 +250,7 @@ class YahooCSVQuote(QuoteBase):
 
         """
         # Split symbols into a list
-        symbol_list = list(symbols)
+        symbol_list = list(self.symbols)
 
         # Symbol output
         output = []
@@ -248,29 +269,47 @@ class YahooCSVQuote(QuoteBase):
 
         return tuple(output)
 
-    def parse_quote(self, get_raw_quote, fields):
+    def parse_quote(self):
         """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
         useful data.
 
         Given a dictionary containing the fields to include in the result.
 
         """
-        if fields == () or fields is None:
+        if self.fields == () or self.fields is None:
             raise Exception('Quote cannot be parsed without output field tuple.')
 
         # Use the CSV module to parse the quote
-        reader = csv.reader(get_raw_quote.split(','))
+        reader = csv.reader(self.raw_quote.split(','))
 
         # Read the raw data
         raw_data = [row[0] for row in reader]
 
         output = {}
 
-        for i in range(len(fields)):
-            field_name, field_type = fields[i]
+        for i in range(len(self.fields)):
+            field_name, field_type = self.fields[i]
             output[field_name] = field_type(raw_data[i])
 
         return output
+
+    def process_quote(self):
+        """Helper method to process a quote.
+
+        Runs the parse_symbols, get_quote_fields, get_raw_quote and parse_quote methods.
+
+        """
+        # Parse the CSV symbols
+        self.parsed_symbols = self.parse_symbols()
+
+        # Determine the field names and types
+        self.fields = self.get_quote_fields()
+
+        # Fetch the raw quote
+        self.raw_quote = self.get_raw_quote()
+
+        # Parse the raw quote with the field names and types
+        self.quote = self.parse_quote()
 
 
 class YahooQuoteHistory(QuoteBase):
