@@ -17,16 +17,24 @@ class QuoteBase(object):
     different models.
 
     """
-    def get_raw_quote(self):
-        """Method to fetch a raw unparsed quote from a provider."""
+    def __init__(self):
+        """Initialise the quote model with any required parameters."""
         raise NotImplementedError('This method must be defined by subclass.')
 
     def get_quote_fields(self):
         """Method to get the field names and data types for this quote."""
         raise NotImplementedError('This method must be defined by subclass.')
 
+    def get_raw_quote(self):
+        """Method to fetch a raw unparsed quote from a provider."""
+        raise NotImplementedError('This method must be defined by subclass.')
+
     def parse_quote(self):
         """Method to parse a raw quote from a provider into a standard format."""
+        raise NotImplementedError('This method must be defined by subclass.')
+
+    def process_quote(self):
+        """Method to fetch and parse a raw quote."""
         raise NotImplementedError('This method must be defined by subclass.')
 
 
@@ -54,6 +62,39 @@ class YahooQuote(QuoteBase):
         # Process quote or defer it for later
         if not defer:
             self.process_quote()
+
+    def get_quote_fields(self):
+        """Returns dictionary of field names and types from given Yahoo YQL field names.
+
+        Each field needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        known_fields = {
+            'Name': {'name': 'Name', 'type': str, },
+            'LastTradePriceOnly': {'name': 'Close', 'type': Decimal, },
+            'StockExchange': {'name': 'Exchange', 'type': str, },
+            'Symbol': {'name': 'Code', 'type': str, },
+            'Volume': {'name': 'Volume', 'type': Decimal, },
+        }
+
+        # If querying all fields, just return the ones we have defined
+        if self.columns == '*':
+            return known_fields
+
+        output = {}
+
+        for field in self.columns:
+            if not known_fields.has_key(field):
+                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+
+            # Find field in our known fields
+            data = known_fields[field]
+
+            # Add the field name and type to the output
+            output[field] = (data['name'], data['type'])
+
+        return output
 
     def get_raw_quote(self):
         """Get a quote from the Yahoo YQL finance tables and return the result.
@@ -89,39 +130,6 @@ class YahooQuote(QuoteBase):
             return quote
 
         raise Exception(error)
-
-    def get_quote_fields(self):
-        """Returns dictionary of field names and types from given Yahoo YQL field names.
-
-        Each field needs it's name and type defined otherwise an Exception is
-        raised.
-
-        """
-        known_fields = {
-            'Name': {'name': 'Name', 'type': str, },
-            'LastTradePriceOnly': {'name': 'Close', 'type': Decimal, },
-            'StockExchange': {'name': 'Exchange', 'type': str, },
-            'Symbol': {'name': 'Code', 'type': str, },
-            'Volume': {'name': 'Volume', 'type': Decimal, },
-        }
-
-        # If querying all fields, just return the ones we have defined
-        if self.columns == '*':
-            return known_fields
-
-        output = {}
-
-        for field in self.columns:
-            if not known_fields.has_key(field):
-                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
-
-            # Find field in our known fields
-            data = known_fields[field]
-
-            # Add the field name and type to the output
-            output[field] = (data['name'], data['type'])
-
-        return output
 
     def parse_quote(self):
         """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
@@ -185,31 +193,6 @@ class YahooCSVQuote(QuoteBase):
         if not defer:
             self.process_quote()
 
-    def get_raw_quote(self):
-        """Get a quote from the Yahoo Finance CSV API and return the result.
-
-        Given the code of the stock and an optional list of symbols that correspond
-        to types of data to get in the quote.
-
-        """
-        if not len(self.code) == 3:
-            raise Exception('Stock code appears incorrect')
-
-        # Only interested in Australian equities at the moment
-        exchange = 'AX'
-
-        quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
-            '?s=%(code)s.%(exchange)s&f=%(symbols)s' \
-            % {
-                'code': self.code, 'exchange': exchange, 'symbols': self.symbols,
-            }
-
-        response = urllib2.urlopen(quote_url)
-
-        quote = response.read()
-
-        return quote
-
     def get_quote_fields(self):
         """Returns field names and types from given Yahoo CSV symbols.
 
@@ -242,6 +225,55 @@ class YahooCSVQuote(QuoteBase):
 
         return tuple(output)
 
+    def get_raw_quote(self):
+        """Get a quote from the Yahoo Finance CSV API and return the result.
+
+        Given the code of the stock and an optional list of symbols that correspond
+        to types of data to get in the quote.
+
+        """
+        if not len(self.code) == 3:
+            raise Exception('Stock code appears incorrect')
+
+        # Only interested in Australian equities at the moment
+        exchange = 'AX'
+
+        quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
+            '?s=%(code)s.%(exchange)s&f=%(symbols)s' \
+            % {
+                'code': self.code, 'exchange': exchange, 'symbols': self.symbols,
+            }
+
+        response = urllib2.urlopen(quote_url)
+
+        quote = response.read()
+
+        return quote
+
+    def parse_quote(self):
+        """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
+        useful data.
+
+        Given a dictionary containing the fields to include in the result.
+
+        """
+        if self.fields == () or self.fields is None:
+            raise Exception('Quote cannot be parsed without output field tuple.')
+
+        # Use the CSV module to parse the quote
+        reader = csv.reader(self.raw_quote.split(','))
+
+        # Read the raw data
+        raw_data = [row[0] for row in reader]
+
+        output = {}
+
+        for i in range(len(self.fields)):
+            field_name, field_type = self.fields[i]
+            output[field_name] = field_type(raw_data[i])
+
+        return output
+
     def parse_symbols(self):
         """Parse a string of Yahoo CSV symbols and return them as a tuple.
 
@@ -268,30 +300,6 @@ class YahooCSVQuote(QuoteBase):
                 output[count-1] = '%s%s' % (symbol_list[i-1], symbol_list[i])
 
         return tuple(output)
-
-    def parse_quote(self):
-        """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
-        useful data.
-
-        Given a dictionary containing the fields to include in the result.
-
-        """
-        if self.fields == () or self.fields is None:
-            raise Exception('Quote cannot be parsed without output field tuple.')
-
-        # Use the CSV module to parse the quote
-        reader = csv.reader(self.raw_quote.split(','))
-
-        # Read the raw data
-        raw_data = [row[0] for row in reader]
-
-        output = {}
-
-        for i in range(len(self.fields)):
-            field_name, field_type = self.fields[i]
-            output[field_name] = field_type(raw_data[i])
-
-        return output
 
     def process_quote(self):
         """Helper method to process a quote.
@@ -338,6 +346,40 @@ class YahooQuoteHistory(QuoteBase):
         if not defer:
             self.process_quote()
 
+    def get_quote_fields(self):
+        """Returns field names and types from given Yahoo YQL field names.
+
+        Each field needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        known_fields = {
+            'Date': {'name': 'Date', 'type': parse_date, },
+            'Open': {'name': 'Open', 'type': Decimal, },
+            'High': {'name': 'High', 'type': Decimal, },
+            'Low': {'name': 'Low', 'type': Decimal, },
+            'Close': {'name': 'Close', 'type': Decimal, },
+            'Volume': {'name': 'Volume', 'type': Decimal, },
+        }
+
+        # If after all fields, just return the ones we have defined
+        if self.columns == '*':
+            return known_fields
+
+        output = {}
+
+        for field in self.columns:
+            if not known_fields.has_key(field):
+                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+
+            # Find field in our known fields
+            data = known_fields[field]
+
+            # Add the field name and type to the output
+            output[field] = (data['name'], data['type'])
+
+        return output
+
     def get_raw_quote(self):
         """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
@@ -381,55 +423,6 @@ class YahooQuoteHistory(QuoteBase):
 
         return quote
 
-    def get_quote_fields(self):
-        """Returns field names and types from given Yahoo YQL field names.
-
-        Each field needs it's name and type defined otherwise an Exception is
-        raised.
-
-        """
-        known_fields = {
-            'Date': {'name': 'Date', 'type': parse_date, },
-            'Open': {'name': 'Open', 'type': Decimal, },
-            'High': {'name': 'High', 'type': Decimal, },
-            'Low': {'name': 'Low', 'type': Decimal, },
-            'Close': {'name': 'Close', 'type': Decimal, },
-            'Volume': {'name': 'Volume', 'type': Decimal, },
-        }
-
-        # If after all fields, just return the ones we have defined
-        if self.columns == '*':
-            return known_fields
-
-        output = {}
-
-        for field in self.columns:
-            if not known_fields.has_key(field):
-                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
-
-            # Find field in our known fields
-            data = known_fields[field]
-
-            # Add the field name and type to the output
-            output[field] = (data['name'], data['type'])
-
-        return output
-
-    def process_quote(self):
-        """Helper method to process a quote.
-
-        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
-
-        """
-        # Determine the field names and types
-        self.fields = self.get_quote_fields()
-
-        # Fetch the raw quote
-        self.raw_quote = self.get_raw_quote()
-
-        # Parse the raw quote with the field names and types
-        self.quote = self.parse_quote()
-
     def parse_quote(self):
         """Parse the raw data from a Yahoo finance YQL historical quote into a
         dictionary of useful data.
@@ -466,6 +459,21 @@ class YahooQuoteHistory(QuoteBase):
 
         return output
 
+    def process_quote(self):
+        """Helper method to process a quote.
+
+        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
+
+        """
+        # Determine the field names and types
+        self.fields = self.get_quote_fields()
+
+        # Fetch the raw quote
+        self.raw_quote = self.get_raw_quote()
+
+        # Parse the raw quote with the field names and types
+        self.quote = self.parse_quote()
+
 
 class YahooCSVQuoteHistory(QuoteBase):
     """Represents a set of historical quotes that are obtained via the Yahoo
@@ -492,6 +500,40 @@ class YahooCSVQuoteHistory(QuoteBase):
         # Process quote or defer it for later
         if not defer:
             self.process_quote()
+
+    def get_quote_fields(self):
+        """Returns field names and types from given Yahoo YQL field names.
+
+        Each field needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        known_fields = {
+            'Date': {'name': 'Date', 'type': parse_date, },
+            'Open': {'name': 'Open', 'type': Decimal, },
+            'High': {'name': 'High', 'type': Decimal, },
+            'Low': {'name': 'Low', 'type': Decimal, },
+            'Close': {'name': 'Close', 'type': Decimal, },
+            'Volume': {'name': 'Volume', 'type': Decimal, },
+        }
+
+        # If after all fields, just return the ones we have defined
+        if self.columns== '*':
+            return known_fields
+
+        output = {}
+
+        for field in self.columns:
+            if not known_fields.has_key(field):
+                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+
+            # Find field in our known fields
+            data = known_fields[field]
+
+            # Add the field name and type to the output
+            output[field] = (data['name'], data['type'])
+
+        return output
 
     def get_raw_quote(self):
         """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
@@ -532,40 +574,6 @@ class YahooCSVQuoteHistory(QuoteBase):
         quote = response.read()
 
         return quote
-
-    def get_quote_fields(self):
-        """Returns field names and types from given Yahoo YQL field names.
-
-        Each field needs it's name and type defined otherwise an Exception is
-        raised.
-
-        """
-        known_fields = {
-            'Date': {'name': 'Date', 'type': parse_date, },
-            'Open': {'name': 'Open', 'type': Decimal, },
-            'High': {'name': 'High', 'type': Decimal, },
-            'Low': {'name': 'Low', 'type': Decimal, },
-            'Close': {'name': 'Close', 'type': Decimal, },
-            'Volume': {'name': 'Volume', 'type': Decimal, },
-        }
-
-        # If after all fields, just return the ones we have defined
-        if self.columns== '*':
-            return known_fields
-
-        output = {}
-
-        for field in self.columns:
-            if not known_fields.has_key(field):
-                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
-
-            # Find field in our known fields
-            data = known_fields[field]
-
-            # Add the field name and type to the output
-            output[field] = (data['name'], data['type'])
-
-        return output
 
     def parse_quote(self):
         """Parse the raw data from a Yahoo finance CSV historical quote into a
