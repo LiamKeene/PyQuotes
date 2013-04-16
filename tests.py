@@ -15,7 +15,7 @@ class YahooQuoteTestCase(unittest.TestCase):
     def setUp(self):
         self.test_code = 'ABC'
 
-        self.test_columns = ['Name', 'Symbol', 'StockExchange', ]
+        self.test_fields = ['Name', 'Code', 'Exchange', ]
 
         # Expected raw quote
         self.test_raw_quote = {
@@ -40,7 +40,7 @@ class YahooQuoteTestCase(unittest.TestCase):
 
     def test_quote_columns(self):
         """YahooQuote should create a new quote object, fetch and parse given columns."""
-        quote = YahooQuote(self.test_code, self.test_columns)
+        quote = YahooQuote(self.test_code, self.test_fields)
 
         self.assertEqual(quote.raw_quote, self.test_raw_quote)
 
@@ -48,10 +48,10 @@ class YahooQuoteTestCase(unittest.TestCase):
 
     def test_quote_deferred(self):
         """YahooQuote should defer fetching and parsing of quote if required."""
-        quote = YahooQuote(self.test_code, self.test_columns, defer=True)
+        quote = YahooQuote(self.test_code, self.test_fields, defer=True)
 
         # Check quote is unprocessed
-        self.assertEqual(quote.fields, {})
+        self.assertEqual(quote.quote_fields, {})
         self.assertTrue(quote.raw_quote is None)
         self.assertTrue(quote.quote is None)
 
@@ -139,7 +139,7 @@ class YahooQuoteGetAttributesTestCase(unittest.TestCase):
         self.test_price_time = time(12, 20, 0)
 
         # Explicitly set the fields and raw quote
-        self.test_quote.fields = {
+        self.test_quote.quote_fields = {
             'Symbol': ('Code', str),
             'LastTradeDate': ('Date', self.test_quote.parse_date),
             'LastTradeTime': ('Time', parse_time),
@@ -187,7 +187,7 @@ class YahooQuoteGetAttributesTestCase(unittest.TestCase):
         self.assertEqual(self.test_quote.price_time, self.test_price_time)
 
 
-class GetYahooQuoteFieldsTestCase(unittest.TestCase):
+class YahooQuoteGetQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `YahooQuote`.`get_quote_fields` function.
 
     The `get_quote_fields` function should return a dictionary of two-tuples
@@ -196,9 +196,9 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
-        self.test_columns = ['Symbol', 'LastTradePriceOnly', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_columns, defer=True)
-        self.test_fields = {
+        self.test_fields = ['Code', 'Close', 'Volume']
+        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_fields = {
             'Symbol': ('Code', str),
             'LastTradePriceOnly': ('Close', Decimal),
             'Volume': ('Volume', Decimal),
@@ -216,7 +216,7 @@ class GetYahooQuoteFieldsTestCase(unittest.TestCase):
 
     def test_get_quote_fields(self):
         """get_quote_fields should return dictionary of tuples of field names."""
-        self.assertEqual(self.test_quote.get_quote_fields(), self.test_fields)
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
 
     def test_get_all_fields(self):
         """get_quote_fields should return dictionary of tuples of all field names."""
@@ -241,29 +241,28 @@ class YahooQuoteGetColumnFromFieldTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
-        self.test_columns = ['Name', 'Symbol', 'LastTradePriceOnly', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_columns, defer=True)
-        # These are the field output names in the parsed quote
         self.test_fields = ['Name', 'Code', 'Close', 'Volume']
+        self.test_columns = ['Name', 'Symbol', 'LastTradePriceOnly', 'Volume']
+        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
 
         self.test_unknown_field = 'RandomField'
 
-    def test_get_column_from_field(self):
-        """get_column_from_field should return quote column name given the field output."""
+    def test_get_field_from_column(self):
+        """get_field_from_column should return field name given the quote column."""
         [
             self.assertEqual(
-                self.test_quote.get_column_from_field(self.test_fields[i]),
-                self.test_columns[i]
+                self.test_quote.get_field_from_column(self.test_columns[i]),
+                self.test_fields[i]
             )
-            for i in range(len(self.test_columns))
+            for i in range(len(self.test_fields))
         ]
 
-    def test_get_column_from_field_not_found(self):
-        """get_column_from_field should raise Exception if the field is unknown."""
+    def test_get_field_from_column_not_found(self):
+        """get_field_from_column should raise Exception if the column is unknown."""
         self.assertRaises(
             Exception,
-            self.test_quote.get_column_from_field,
-            self.test_unknown_field
+            self.test_quote.get_field_from_column,
+            self.test_unknown_column
         )
 
 
@@ -301,7 +300,7 @@ class YahooQuoteGetFieldFromColumnTestCase(TestCase):
         )
 
 
-class GetRawYahooQuoteTestCase(unittest.TestCase):
+class YahooQuoteGetRawQuoteTestCase(unittest.TestCase):
     """Test Case for `YahooQuote`.`get_raw_quote` function.
 
     The `get_raw_quote` function should query Yahoo's finance tables using YQL
@@ -312,7 +311,7 @@ class GetRawYahooQuoteTestCase(unittest.TestCase):
         self.good_code = 'ABC'
         self.bad_code = 'A'
 
-        self.columns = ['Name', 'Symbol', 'StockExchange', ]
+        self.fields = ['Name', 'Code', 'Exchange', ]
 
         # Expected raw quote
         self.test_raw_quote = {
@@ -324,7 +323,7 @@ class GetRawYahooQuoteTestCase(unittest.TestCase):
 
         self.test_bad_quote = YahooQuote(self.bad_code, defer=True)
 
-        self.test_quote_columns = YahooQuote(self.good_code, self.columns, defer=True)
+        self.test_quote_fields = YahooQuote(self.good_code, self.fields, defer=True)
 
     def test_quote_good_code(self):
         """get_raw_quote should return True given a valid code."""
@@ -338,12 +337,12 @@ class GetRawYahooQuoteTestCase(unittest.TestCase):
         """get_raw_quote should raise an Exception given an invalid code."""
         self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
 
-    def test_quote_get_columns(self):
-        """get_raw_quote should return the requested column only."""
-        self.assertEqual(self.test_quote_columns.get_raw_quote(), self.test_raw_quote)
+    def test_quote_get_fields(self):
+        """YahooQuote.get_raw_quote should return the requested fields only."""
+        self.assertEqual(self.test_quote_fields.get_raw_quote(), self.test_raw_quote)
 
 
-class ParseYahooQuoteTestCase(unittest.TestCase):
+class YahooQuoteParseQuoteTestCase(unittest.TestCase):
     """Test Case for the `YahooQuote`.`parse_quote` function.
 
     The `parse_quote` function should correctly parse the information from
@@ -353,13 +352,13 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
     def setUp(self):
         # Create three test quote objects
         self.test_code = 'ABC'
-        self.test_columns = ['Symbol', 'LastTradePriceOnly', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_columns, defer=True)
-        self.test_quote_partial = YahooQuote(self.test_code, self.test_columns, defer=True)
-        self.test_quote_no_fields = YahooQuote(self.test_code, self.test_columns, defer=True)
+        self.test_fields = ['Symbol', 'LastTradePriceOnly', 'Volume']
+        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_partial = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_no_fields = YahooQuote(self.test_code, self.test_fields, defer=True)
 
         # Explicitly set the quote fields and raw quote (is this a good idea?)
-        self.test_quote.fields = {
+        self.test_quote.quote_fields = {
             'Symbol': ('Code', str),
             'LastTradePriceOnly': ('Close', Decimal),
             'Volume': ('Volume', Decimal),
@@ -374,7 +373,7 @@ class ParseYahooQuoteTestCase(unittest.TestCase):
         }
 
         # Explicitly set a partial set of the quote fields
-        self.test_quote_partial.fields = {
+        self.test_quote_partial.quote_fields = {
             'Symbol': ('Code', str),
         }
         self.test_quote_partial.raw_quote = self.test_quote.raw_quote

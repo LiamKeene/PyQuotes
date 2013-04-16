@@ -43,19 +43,20 @@ class YahooQuote(QuoteBase):
     using the YQL library.
 
     """
-    def __init__(self, code, columns='*', defer=False):
+    def __init__(self, code, fields='*', defer=False):
         """Initialise a YahooQuote given the stock code.
 
-        Optionally give a list of columns to include in the YQL query (default is
-        all columns `*`).
+        Optionally given a list of field names that containg the required data
+        in the YQL quote (default is all fields `*`), and a boolean to determine
+        whether to process the quote now or at a later time (default is False).
 
         """
         # Store the stock code and columns of data to fetch
         self.code = code
-        self.columns = columns
+        self.fields = fields
 
         # Default value of quote
-        self.fields = {}
+        self.quote_fields = {}
         self.raw_quote = None
         self.quote = None
 
@@ -65,6 +66,12 @@ class YahooQuote(QuoteBase):
 
     @property
     def _known_fields(self):
+        """Returns the known fields of this quote model.
+
+        Known fields is a dictionary of YQL query column names as the keys,
+        and the output field name and field data type as the values.
+
+        """
         return {
             'Name': ('Name', str),
             'LastTradeDate': ('Date', YahooQuote.parse_date),
@@ -93,40 +100,45 @@ class YahooQuote(QuoteBase):
             raise Exception('Quote not parsed.')
         return self.quote['Time']
 
-    def get_column_from_field(self, field_name):
-        for field, (col_name, col_type) in self._known_fields.items():
-            if col_name == field_name:
-                return field
-        raise Exception('Field: %s is not known or unhandled' % (field_name, ))
+    def get_column_from_field(self, field):
+        """Returns the YQL query column name from the field name."""
+        for column_name, (field_name, field_type) in self._known_fields.items():
+            if field == field_name:
+                return column_name
+        raise Exception('Field - %s is not known or unhandled' % (field, ))
 
-    def get_field_from_column(self, column_name):
-        for field, (col_name, col_type) in self._known_fields.items():
-            if field == column_name:
-                return col_name
-        raise Exception('Column: %s is not known or unhandled' % (column_name, ))
+    def get_field_from_column(self, column):
+        """Returns the field name from the YQL query column name."""
+        for column_name, (field_name, field_type) in self._known_fields.items():
+            if column == column_name:
+                return field_name
+        raise Exception('Column: %s is not known or unhandled' % (column, ))
 
     def get_quote_fields(self):
-        """Returns dictionary of field names and types from given Yahoo YQL field names.
+        """Returns dictionary of field names and types from given YQL column names.
 
         Each field needs it's name and type defined otherwise an Exception is
         raised.
 
         """
-        # If querying all fields, just return the ones we have defined
-        if self.columns == '*':
+        # If after all fields, just return the ones we have defined
+        if self.fields == '*':
             return self._known_fields
 
         output = {}
 
-        for field in self.columns:
-            if not self._known_fields.has_key(field):
-                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+        # Determine the query columns
+        columns = [self.get_column_from_field(field) for field in self.fields]
+
+        for column in columns:
+            if not self._known_fields.has_key(column):
+                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
 
             # Find field in our known fields
-            data_name, data_type = self._known_fields[field]
+            data_name, data_type = self._known_fields[column]
 
             # Add the field name and type to the output
-            output[field] = (data_name, data_type)
+            output[column] = (data_name, data_type)
 
         return output
 
@@ -144,10 +156,18 @@ class YahooQuote(QuoteBase):
         y = yql.Public()
         env = 'http://www.datatables.org/alltables.env'
 
-        # Ensure the error column in included and then join as a comma separated string
-        if not self.columns == '*' and not error_column in self.columns:
-            self.columns.append(error_column)
-        columns = ','.join(self.columns)
+        # Determine the query columns
+        if self.fields == '*':
+            columns = '*'
+        else:
+            columns = [self.get_column_from_field(field) for field in self.fields]
+
+            # Ensure the error column in included
+            if not error_column in columns:
+                columns.append(error_column)
+
+        # Join as a comma separated string
+        columns = ','.join(columns)
 
         # Execute the query and get the response
         query = 'select %(columns)s from yahoo.finance.quotes where symbol = "%(code)s.%(exchange)s"' \
@@ -219,16 +239,16 @@ class YahooQuote(QuoteBase):
         Given a dictionary containing the fields to include in the result.
 
         """
-        if self.fields == {} or self.fields is None:
+        if self.quote_fields == {} or self.quote_fields is None:
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
         output = {}
 
         for key, value in self.raw_quote.items():
             # Ignore fields in data that are not in requested field dict
-            if not self.fields.has_key(key):
+            if not self.quote_fields.has_key(key):
                 continue
-            field_name, field_type = self.fields[key]
+            field_name, field_type = self.quote_fields[key]
             output[field_name] = field_type(value)
 
         return output
@@ -240,7 +260,7 @@ class YahooQuote(QuoteBase):
 
         """
         # Determine the field names and types
-        self.fields = self.get_quote_fields()
+        self.quote_fields = self.get_quote_fields()
 
         # Fetch the raw quote
         self.raw_quote = self.get_raw_quote()
