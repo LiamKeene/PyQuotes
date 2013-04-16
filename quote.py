@@ -273,20 +273,21 @@ class YahooCSVQuote(QuoteBase):
     """Represents a quote that is obtained via the Yahoo CSV API.
 
     """
-    def __init__(self, code, symbols='nsxl1', defer=False):
+    def __init__(self, code, fields='*', defer=False):
         """Initialise a YahooCSVQuote given the stock code.
 
-        Optionally give a list of symbols to include in the CSV Url (default is
-        `nsxl1`).
+        Optionally given a list of field names that containg the required data
+        in the YQL quote (default is all fields `*`), and a boolean to determine
+        whether to process the quote now or at a later time (default is False).
 
         """
         # Store the stock code and columns of data to fetch
         self.code = code
-        self.symbols = symbols
+        self.fields = fields
 
         # Default value of quote
         self.parsed_symbols = ()
-        self.fields = ()
+        self.quote_fields = {}
         self.raw_quote = None
         self.quote = None
 
