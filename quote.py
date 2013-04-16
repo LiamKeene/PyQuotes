@@ -235,15 +235,17 @@ class YahooCSVQuote(QuoteBase):
     @property
     def _known_symbols(self):
         return {
-        'g': ('Low', Decimal),
-        'h': ('High', Decimal),
-        'l1': ('Close', Decimal),
-        'n': ('Name', str),
-        'o': ('Open', Decimal),
-        's': ('Code', str),
-        'v': ('Volume', Decimal),
-        'x': ('Exchange', str),
-    }
+            'd1': ('Date', parse_date),
+            'g': ('Low', Decimal),
+            'h': ('High', Decimal),
+            'l1': ('Close', Decimal),
+            'n': ('Name', str),
+            'o': ('Open', Decimal),
+            's': ('Code', str),
+            't1': ('Time', parse_time),
+            'v': ('Volume', Decimal),
+            'x': ('Exchange', str),
+        }
 
     def get_quote_fields(self):
         """Returns field names and types from given Yahoo CSV symbols.
