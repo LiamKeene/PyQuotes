@@ -623,15 +623,14 @@ class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
     """Test Case for the `YahooCSVQuote`.`get_column_from_field` function.
 
     The `get_column_from_field` function should return the column (symbol) if
-    given the output field name.  Basically works the reverse of `get_quote_fields`.
+    given the output field name.  Basically works the reverse of `get_field_from_column`.
 
     """
     def setUp(self):
         self.test_code = 'ABC'
-        self.test_symbols = ('n', 's', 'l1', 'v')
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_symbols, defer=True)
-        # These are the field output names in the parsed quote
         self.test_fields = ['Name', 'Code', 'Close', 'Volume']
+        self.test_symbols = ('n', 's', 'l1', 'v')
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
 
         self.test_unknown_field = 'RandomField'
 
@@ -650,6 +649,40 @@ class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
         self.assertRaises(
             Exception,
             self.test_quote.get_column_from_field,
+            self.test_unknown_field
+        )
+
+
+class YahooCSVQuoteGetFieldFromColumnTestCase(TestCase):
+    """Test Case for the `YahooCSVQuote`.`get_field_from_column` function.
+
+    The `get_field_from_column` function should return the output field name if
+    given the column name.  Basically works the reverse of `get_column_from_field`.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_fields = ['Name', 'Code', 'Close', 'Volume']
+        self.test_columns = ('n', 's', 'l1', 'v')
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+
+        self.test_unknown_field = 'RandomField'
+
+    def test_get_field_from_column(self):
+        """get_field_from_column should return quote field given the column/symbol."""
+        [
+            self.assertEqual(
+                self.test_quote.get_field_from_column(self.test_columns[i]),
+                self.test_fields[i]
+            )
+            for i in range(len(self.test_fields))
+        ]
+
+    def test_get_field_from_column_not_found(self):
+        """get_field_from_column should raise Exception if the field is unknown."""
+        self.assertRaises(
+            Exception,
+            self.test_quote.get_field_from_column,
             self.test_unknown_field
         )
 
