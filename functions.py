@@ -1,10 +1,7 @@
 import re
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
-DATE_RE = re.compile(
-    r'(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})$'
-)
 LOOKBACK_DAYS = 60
 
 def date_range_generator(start_date, end_date):
@@ -34,12 +31,35 @@ def date_range_generator(start_date, end_date):
 def parse_date(value):
     """Parses a string and returns a datetime.date object.
 
-    From django.utils.parse_date.
+    From django.utils.dateparse.
 
     """
-    match = DATE_RE.match(value)
+    date_re = re.compile(
+        r'(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})$'
+    )
+    match = date_re.match(value)
     if match:
         return date(**dict((k, int(v)) for k, v in match.groupdict().items()))
+
+def parse_time(value):
+    """Parses a string and return a datetime.time.
+
+    This function doesn't support time zone offsets.
+
+    From django.utils.dateparse.
+
+    """
+    time_re = re.compile(
+        r'(?P<hour>\d{1,2}):(?P<minute>\d{1,2})'
+        r'(?::(?P<second>\d{1,2})(?:\.(?P<microsecond>\d{1,6})\d{0,6})?)?'
+    )
+    match = time_re.match(value)
+    if match:
+        kw = match.groupdict()
+        if kw['microsecond']:
+            kw['microsecond'] = kw['microsecond'].ljust(6, '0')
+        kw = dict((k, int(v)) for k, v in match.groupdict().items() if v is not None)
+        return time(**kw)
 
 def validate_date_range(date_range):
     """Validate a date range.
