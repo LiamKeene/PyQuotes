@@ -377,6 +377,132 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
+class YahooCSVQuoteParseDateTestCase(unittest.TestCase):
+    """Test Case for the YahooCSVQuote.parse_date function.
+
+    """
+    def setUp(self):
+        self.test_quote = YahooCSVQuote('ABC', defer=True)
+        self.test_raw_date = '04/10/2013'
+        self.test_parsed_date = date(2013, 4, 10)
+
+    def test_parse_date(self):
+        """parse_date should parse a Yahoo CSV date correctly."""
+        self.assertEqual(
+            self.test_quote.parse_date(self.test_raw_date),
+            self.test_parsed_date
+        )
+
+
+class YahooCSVQuoteParseDateTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooCSVQuote.parse_date_time function.
+
+    The Yahoo CSV quotes are given in the US/Eastern timezone, which must then
+    be converted to the timezone specified in the project settings.
+
+    Uses the django.utils.timezone module, which in turn uses pytz or a custom class.
+
+    """
+    def setUp(self):
+        # Create a deferred quote
+        self.test_quote = YahooQuote('ABC', defer=True)
+
+        # The raw date and time from a quote (not called so we can control them)
+        self.test_raw_date = '04/10/2013'
+        self.test_raw_time = '10:21pm'
+
+        # Get the desired timezone from the quote module
+        time_zone = TIME_ZONE
+
+        # Create timezone used in the quote
+        self.test_time_zone = pytz.timezone(time_zone)
+
+        # The parsed date/time in the desired timezone
+        self.test_parsed_datetime = datetime(
+            2013, 4, 11, 12, 21, tzinfo=self.test_time_zone
+        )
+
+    def test_parse_date_time(self):
+        """parse_date_time should parse a Yahoo CSV date and time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_datetime(self.test_raw_date, self.test_raw_time),
+            self.test_parsed_datetime
+        )
+
+
+class YahooCSVQuoteParseTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooCSVQuote.parse_time function.
+
+    """
+    def setUp(self):
+        self.test_quote = YahooCSVQuote('ABC', defer=True)
+        self.test_raw_time = '10:21pm'
+        self.test_parsed_time = time(22, 21)
+
+    def test_parse_time(self):
+        """parse_time should parse a Yahoo CSV time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_time(self.test_raw_time),
+            self.test_parsed_time
+        )
+
+
+class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
+    """Test Case for the attributes of a YahooCSVQuote.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_quote = YahooCSVQuote(self.test_code, defer=True)
+
+        self.test_price = Decimal('3.32')
+        self.test_price_date = date(2013, 4, 10)
+        self.test_price_time = time(12, 20, 0)
+
+        # Explicitly set the fields and raw quote
+        self.test_quote.fields = (
+            ('Code', str),
+            ('Close', Decimal)
+            ('Date', self.test_quote.parse_date),
+            ('Time', self.test_quote.parse_time),
+        )
+
+        self.test_quote.raw_quote = '"ABCAX",3.320,"4/10/2013","10:21pm"\r\n'
+
+    def test_quote_price(self):
+        """Test the quote.price is correct after a quote is parsed."""
+        # Un-parsed quote (deferred quote?) should raise an Exception
+        self.assertRaises(Exception, getattr, self.test_quote, 'price')
+
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        # Parsed quote should have correct price
+        self.assertEqual(self.test_quote.price, self.test_price)
+
+    def test_quote_date(self):
+        """Test the quote.price_date is correct after a quote is parsed."""
+        # Un-parsed quote (deferred quote?) should raise an Exception
+        self.assertRaises(Exception, getattr, self.test_quote, 'price_date')
+
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        # Parsed quote should have correct date
+        self.assertEqual(self.test_quote.price_date, self.test_price_date)
+
+    def test_quote_time(self):
+        """Test the quote.price_time is correct after a quote is parsed."""
+        # Un-parsed quote (deferred quote?) should raise an Exception
+        self.assertRaises(Exception, getattr, self.test_quote, 'price_time')
+
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        # Parsed quote should have correct price
+        self.assertEqual(self.test_quote.price_time, self.test_price_time)
+
+
 class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `YahooCSVQuote`.`get_quote_fields` function.
 
