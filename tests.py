@@ -1,7 +1,7 @@
 import unittest
 import yql
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from functions import *
@@ -71,6 +71,67 @@ class YahooQuoteParseDateTestCase(unittest.TestCase):
             self.test_quote.parse_date(self.test_raw_date),
             self.test_parsed_date
         )
+
+
+class YahooQuoteGetAttributesTestCase(unittest.TestCase):
+    """Test Case for the attributes of a YahooQuote.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_quote = YahooQuote(self.test_code, defer=True)
+
+        self.test_price = Decimal('3.32')
+        self.test_price_date = date(2013, 4, 10)
+        self.test_price_time = time(12, 20, 0)
+
+        # Explicitly set the fields and raw quote
+        self.test_quote.fields = {
+            'Symbol': ('Code', str),
+            'LastTradeDate': ('Date', self.test_quote.parse_date),
+            'LastTradeTime': ('Time', parse_time),
+            'LastTradePriceOnly': ('Close', Decimal),
+        }
+
+        self.test_quote.raw_quote = {
+            'Symbol': u'ABC.AX',
+            'LastTradePriceOnly': str(self.test_price),
+            'LastTradeDate': self.test_price_date.strftime('%m/%d/%Y'),
+            'LastTradeTime': self.test_price_time.strftime('%I:%M%p'),
+        }
+
+    def test_quote_price(self):
+        """Test the quote.price is correct after a quote is parsed."""
+        # Un-parsed quote (deferred quote?) should raise an Exception
+        self.assertRaises(Exception, getattr, self.test_quote, 'price')
+
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        # Parsed quote should have correct price
+        self.assertEqual(self.test_quote.price, self.test_price)
+
+    def test_quote_date(self):
+        """Test the quote.price_date is correct after a quote is parsed."""
+        # Un-parsed quote (deferred quote?) should raise an Exception
+        self.assertRaises(Exception, getattr, self.test_quote, 'price_date')
+
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        # Parsed quote should have correct date
+        self.assertEqual(self.test_quote.price_date, self.test_price_date)
+
+    def test_quote_time(self):
+        """Test the quote.price_time is correct after a quote is parsed."""
+        # Un-parsed quote (deferred quote?) should raise an Exception
+        self.assertRaises(Exception, getattr, self.test_quote, 'price_time')
+
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        # Parsed quote should have correct price
+        self.assertEqual(self.test_quote.price_time, self.test_price_time)
 
 
 class GetYahooQuoteFieldsTestCase(unittest.TestCase):

@@ -6,7 +6,7 @@ import yql
 from datetime import date
 from decimal import Decimal
 
-from functions import parse_date, validate_date_range
+from functions import parse_date, parse_time, validate_date_range
 
 
 class QuoteBase(object):
@@ -64,11 +64,31 @@ class YahooQuote(QuoteBase):
     def _known_fields(self):
         return {
         'Name': ('Name', str),
+        'LastTradeDate': ('Date', YahooQuote.parse_date),
+        'LastTradeTime': ('Time', parse_time),
         'LastTradePriceOnly': ('Close', Decimal),
         'StockExchange': ('Exchange', str),
         'Symbol': ('Code', str),
         'Volume': ('Volume', Decimal),
     }
+
+    @property
+    def price(self):
+        if self.quote is None:
+            raise Exception('Quote not parsed.')
+        return self.quote['Close']
+
+    @property
+    def price_date(self):
+        if self.quote is None:
+            raise Exception('Quote not parsed.')
+        return self.quote['Date']
+
+    @property
+    def price_time(self):
+        if self.quote is None:
+            raise Exception('Quote not parsed.')
+        return self.quote['Time']
 
     def get_quote_fields(self):
         """Returns dictionary of field names and types from given Yahoo YQL field names.
