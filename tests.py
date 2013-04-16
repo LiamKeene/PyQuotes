@@ -73,6 +73,59 @@ class YahooQuoteParseDateTestCase(unittest.TestCase):
         )
 
 
+class YahooQuoteParseDateTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooQuote.parse_date_time function.
+
+    The Yahoo YQL quotes are given in the US/Eastern timezone, which must then
+    be converted to the timezone specified in the project settings.
+
+    Uses the django.utils.timezone module, which in turn uses pytz or a custom class.
+
+    """
+    def setUp(self):
+        # Create a deferred quote
+        self.test_quote = YahooQuote('ABC', defer=True)
+
+        # The raw date and time from a quote (not called so we can control them)
+        self.test_raw_date = '04/10/2013'
+        self.test_raw_time = '10:21pm'
+
+        # Get the desired timezone from the quote module
+        time_zone = TIME_ZONE
+
+        # Create timezone used in the quote
+        self.test_time_zone = pytz.timezone(time_zone)
+
+        # The parsed date/time in the desired timezone
+        self.test_parsed_datetime = datetime(
+            2013, 4, 11, 12, 21, tzinfo=self.test_time_zone
+        )
+
+    def test_parse_date_time(self):
+        """parse_date_time should parse a Yahoo YQL date and time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_datetime(self.test_raw_date, self.test_raw_time),
+            self.test_parsed_datetime
+        )
+
+
+class YahooQuoteParseTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooQuote.parse_time function.
+
+    """
+    def setUp(self):
+        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_raw_time = '10:21pm'
+        self.test_parsed_time = time(22, 21)
+
+    def test_parse_time(self):
+        """parse_time should parse a Yahoo YQL time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_time(self.test_raw_time),
+            self.test_parsed_time
+        )
+
+
 class YahooQuoteGetAttributesTestCase(unittest.TestCase):
     """Test Case for the attributes of a YahooQuote.
 

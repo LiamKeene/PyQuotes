@@ -1,12 +1,15 @@
 import csv
+import pytz
 import re
 import urllib2
 import yql
 
-from datetime import date
+from datetime import datetime
 from decimal import Decimal
 
 from functions import parse_date, parse_time, validate_date_range
+
+TIME_ZONE = 'Australia/Sydney'
 
 
 class QuoteBase(object):
@@ -63,14 +66,14 @@ class YahooQuote(QuoteBase):
     @property
     def _known_fields(self):
         return {
-        'Name': ('Name', str),
-        'LastTradeDate': ('Date', YahooQuote.parse_date),
-        'LastTradeTime': ('Time', parse_time),
-        'LastTradePriceOnly': ('Close', Decimal),
-        'StockExchange': ('Exchange', str),
-        'Symbol': ('Code', str),
-        'Volume': ('Volume', Decimal),
-    }
+            'Name': ('Name', str),
+            'LastTradeDate': ('Date', YahooQuote.parse_date),
+            'LastTradeTime': ('Time', YahooQuote.parse_time),
+            'LastTradePriceOnly': ('Close', Decimal),
+            'StockExchange': ('Exchange', str),
+            'Symbol': ('Code', str),
+            'Volume': ('Volume', Decimal),
+        }
 
     @property
     def price(self):
@@ -154,21 +157,48 @@ class YahooQuote(QuoteBase):
     def parse_date(value):
         """Parses a string and return a datetime.date.
 
-        Raises ValueError if the input is well formatted but not a valid date.
-        Returns None if the input isn't well formatted.
-
-        Based on django.utils.dateparse.parse_date, but to a different spec that
-        is customised for the Yahoo YQL data.  Yahoo YQL data returns dates in
-        %m/%d/%Y format.
+        This is a staticmethod as it only applies to the format of YQL date strings.
 
         """
-        date_re = re.compile(
-            r'(?P<month>\d{1,2})\/(?P<day>\d{1,2})\/(?P<year>\d{4})$'
-        )
-        match = date_re.match(value)
-        if match:
-            kw = dict((k, int(v)) for k, v in match.groupdict().items())
-            return date(**kw)
+        return datetime.strptime(value, '%m/%d/%Y').date()
+
+    @staticmethod
+    def parse_datetime(date_str, time_str):
+        """Parses date/time strings and returns a date/time objects in the local timezone.
+
+        Yahoo YQL data returns dates in %m/%d/%Y format, and times in the
+        US/Eastern timezone.
+
+        This is a staticmethod as it only applies to the format of date and time
+        strings that appear in a Yahoo YQL Quote.
+
+        """
+        # Match the date and time strings to create a single datetime
+        date_time_str = '%s %s' % (date_str, time_str)
+        date_time_fmt = '%m/%d/%Y %I:%M%p'
+
+        datetime_obj = datetime.strptime(date_time_str, date_time_fmt)
+
+        date_obj = datetime_obj.date()
+
+        # Create the timezone used in the quote
+        yql_timezone = pytz.timezone('US/Eastern')
+        yql_datetime = yql_timezone.localize(datetime_obj, is_dst=True)
+
+        # Convert the datetime into the desired timezone
+        req_timezone = pytz.timezone(TIME_ZONE)
+        req_datetime = req_timezone.normalize(yql_datetime.astimezone(req_timezone))
+
+        return req_datetime
+
+    @staticmethod
+    def parse_time(value):
+        """Parses a string and return a datetime.time.
+
+        This is a staticmethod as it only applies to the format of YQL time strings.
+
+        """
+        return datetime.strptime(value, '%I:%M%p').time()
 
     def parse_quote(self):
         """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
