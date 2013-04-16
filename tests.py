@@ -541,7 +541,7 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
 
     def test_get_all_fields(self):
         """get_quote_fields should return dictionary of tuples of all field names."""
-        self.assertEqual(self.test_quote_all_fields.get_quote_fields(), self.test_quote.known_fields)
+        self.assertEqual(self.test_quote_all_fields.get_quote_fields(), self.test_quote._known_fields)
 
     def test_unknown_fields(self):
         """get_quote_fields should raise Exception if the field is unknown."""
@@ -819,7 +819,7 @@ class GetYahooCSVQuoteHistoryFieldsTestCase(unittest.TestCase):
 
     def test_get_all_fields(self):
         """get_quote_fields should return dictionary of tuples of all field names."""
-        self.assertEqual(self.test_quote_all_fields.get_quote_fields(), self.test_quote.known_fields)
+        self.assertEqual(self.test_quote_all_fields.get_quote_fields(), self.test_quote._known_fields)
 
     def test_unknown_fields(self):
         """get_quote_fields should raise Exception if the field is unknown."""
