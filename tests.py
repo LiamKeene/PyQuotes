@@ -586,11 +586,11 @@ class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
             self.assertRaises(Exception, quote.get_quote_fields)
 
 
-class YahooCSVQuoteGetSymbolFromFieldTestCase(TestCase):
-    """Test Case for the `YahooCSVQuote`.`get_symbol_from_field` function.
+class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
+    """Test Case for the `YahooCSVQuote`.`get_column_from_field` function.
 
-    The `get_symbol_from_field` function should return the symbol if given
-    the output field name.  Basically works the reverse of `get_quote_fields`.
+    The `get_column_from_field` function should return the column (symbol) if
+    given the output field name.  Basically works the reverse of `get_quote_fields`.
 
     """
     def setUp(self):
@@ -602,21 +602,21 @@ class YahooCSVQuoteGetSymbolFromFieldTestCase(TestCase):
 
         self.test_unknown_field = 'RandomField'
 
-    def test_get_symbol_from_field(self):
-        """get_symbol_from_field should return quote symbol given the field output."""
+    def test_get_column_from_field(self):
+        """get_column_from_field should return quote column/symbol given the field output."""
         [
             self.assertEqual(
-                self.test_quote.get_symbol_from_field(self.test_fields[i]),
+                self.test_quote.get_column_from_field(self.test_fields[i]),
                 self.test_symbols[i]
             )
             for i in range(len(self.test_symbols))
         ]
 
-    def test_get_symbol_from_field_not_found(self):
-        """get_symbol_from_field should raise Exception if the symbol is unknown."""
+    def test_get_column_from_field_not_found(self):
+        """get_column_from_field should raise Exception if the column/symbol is unknown."""
         self.assertRaises(
             Exception,
-            self.test_quote.get_symbol_from_field,
+            self.test_quote.get_column_from_field,
             self.test_unknown_field
         )
 

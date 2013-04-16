@@ -269,7 +269,7 @@ class YahooCSVQuote(QuoteBase):
             self.process_quote()
 
     @property
-    def _known_symbols(self):
+    def _known_fields(self):
         return {
             'd1': ('Date', YahooCSVQuote.parse_date),
             'g': ('Low', Decimal),
@@ -301,8 +301,8 @@ class YahooCSVQuote(QuoteBase):
             raise Exception('Quote not parsed.')
         return self.quote['Time']
 
-    def get_symbol_from_field(self, field_name):
-        for field, (col_name, col_type) in self._known_symbols.items():
+    def get_column_from_field(self, field_name):
+        for field, (col_name, col_type) in self._known_columns.items():
             if col_name == field_name:
                 return field
         raise Exception('Field: %s is not known or unhandled' % (field_name, ))
@@ -317,11 +317,11 @@ class YahooCSVQuote(QuoteBase):
         output = []
 
         for symbol in self.parsed_symbols:
-            if not self._known_symbols.has_key(symbol):
+            if not self._known_columns.has_key(symbol):
                 raise NotImplementedError('Symbol: %s is not known or unhandled' % (symbol, ))
 
             # Find symbol in our known symbols
-            data_name, data_type = self._known_symbols[symbol]
+            data_name, data_type = self._known_columns[symbol]
 
             # Add the field name and type to the output
             output.append((data_name, data_type))
