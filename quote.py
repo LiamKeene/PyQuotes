@@ -93,6 +93,12 @@ class YahooQuote(QuoteBase):
             raise Exception('Quote not parsed.')
         return self.quote['Time']
 
+    def get_column_from_field(self, field_name):
+        for field, (col_name, col_type) in self._known_fields.items():
+            if col_name == field_name:
+                return field
+        raise Exception('Field: %s is not known or unhandled' % (field_name, ))
+
     def get_quote_fields(self):
         """Returns dictionary of field names and types from given Yahoo YQL field names.
 
@@ -295,6 +301,12 @@ class YahooCSVQuote(QuoteBase):
             raise Exception('Quote not parsed.')
         return self.quote['Time']
 
+    def get_symbol_from_field(self, field_name):
+        for field, (col_name, col_type) in self._known_symbols.items():
+            if col_name == field_name:
+                return field
+        raise Exception('Field: %s is not known or unhandled' % (field_name, ))
+
     def get_quote_fields(self):
         """Returns field names and types from given Yahoo CSV symbols.
 
@@ -487,13 +499,20 @@ class YahooQuoteHistory(QuoteBase):
     @property
     def _known_fields(self):
         return {
-        'Date': ('Date', parse_date),
-        'Open': ('Open', Decimal),
-        'High': ('High', Decimal),
-        'Low': ('Low', Decimal),
-        'Close': ('Close', Decimal),
-        'Volume': ('Volume', Decimal),
-    }
+            'Date': ('Date', parse_date),
+            'Open': ('Open', Decimal),
+            'High': ('High', Decimal),
+            'Low': ('Low', Decimal),
+            'Close': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+            'Adj_Close': ('Adj Close', Decimal),
+        }
+
+    def get_column_from_field(self, field_name):
+        for field, (col_name, col_type) in self._known_fields.items():
+            if col_name == field_name:
+                return field
+        raise Exception('Field: %s is not known or unhandled' % (field_name, ))
 
     def get_quote_fields(self):
         """Returns field names and types from given Yahoo YQL field names.
@@ -644,13 +663,20 @@ class YahooCSVQuoteHistory(QuoteBase):
     @property
     def _known_fields(self):
         return {
-        'Date': ('Date', parse_date),
-        'Open': ('Open', Decimal),
-        'High': ('High', Decimal),
-        'Low': ('Low', Decimal),
-        'Close': ('Close', Decimal),
-        'Volume': ('Volume', Decimal),
-    }
+            'Date': ('Date', parse_date),
+            'Open': ('Open', Decimal),
+            'High': ('High', Decimal),
+            'Low': ('Low', Decimal),
+            'Close': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+            'Adj Close': ('Adj Close', Decimal),
+        }
+
+    def get_column_from_field(self, field_name):
+        for field, (col_name, col_type) in self._known_fields.items():
+            if col_name == field_name:
+                return field
+        raise Exception('Field: %s is not known or unhandled' % (field_name, ))
 
     def get_quote_fields(self):
         """Returns field names and types from given Yahoo YQL field names.
