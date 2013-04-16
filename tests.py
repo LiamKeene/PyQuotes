@@ -687,7 +687,7 @@ class YahooCSVQuoteGetFieldFromColumnTestCase(TestCase):
         )
 
 
-class ParseYahooCSVQuoteSymbolsTestCase(unittest.TestCase):
+class YahooCSVQuoteParseSymbolsTestCase(unittest.TestCase):
     """Test Case for the `YahooCSVQuote`.`parse_symbols` function.
 
     The `parse_symbols` function should parse a string of Yahoo CSV tags
