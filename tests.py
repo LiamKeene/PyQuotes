@@ -236,7 +236,7 @@ class YahooQuoteGetColumnFromFieldTestCase(TestCase):
     """Test Case for the `YahooQuote`.`get_column_from_field` function.
 
     The `get_column_from_field` function should return the column name if given
-    the output field name.  Basically works the reverse of `get_quote_fields`.
+    the output field name.  Basically works the reverse of `get_field_from_column`.
 
     """
     def setUp(self):
@@ -264,6 +264,40 @@ class YahooQuoteGetColumnFromFieldTestCase(TestCase):
             Exception,
             self.test_quote.get_column_from_field,
             self.test_unknown_field
+        )
+
+
+class YahooQuoteGetFieldFromColumnTestCase(TestCase):
+    """Test Case for the `YahooQuote`.`get_field_from_column` function.
+
+    The `get_field_from_column` function should return the field name if given
+    the query column.  Basically works the reverse of `get_column_from_field`.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_fields = ['Name', 'Code', 'Close', 'Volume']
+        self.test_columns = ['Name', 'Symbol', 'LastTradePriceOnly', 'Volume']
+        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+
+        self.test_unknown_column = 'RandomColumn'
+
+    def test_get_column_from_field(self):
+        """get_column_from_field should return quote column name given the field output."""
+        [
+            self.assertEqual(
+                self.test_quote.get_field_from_column(self.test_columns[i]),
+                self.test_fields[i]
+            )
+            for i in range(len(self.test_fields))
+        ]
+
+    def test_get_column_from_field_not_found(self):
+        """get_column_from_field should raise Exception if the field is unknown."""
+        self.assertRaises(
+            Exception,
+            self.test_quote.get_field_from_column,
+            self.test_unknown_column
         )
 
 

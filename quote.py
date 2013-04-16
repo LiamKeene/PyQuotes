@@ -99,6 +99,12 @@ class YahooQuote(QuoteBase):
                 return field
         raise Exception('Field: %s is not known or unhandled' % (field_name, ))
 
+    def get_field_from_column(self, column_name):
+        for field, (col_name, col_type) in self._known_fields.items():
+            if field == column_name:
+                return col_name
+        raise Exception('Column: %s is not known or unhandled' % (column_name, ))
+
     def get_quote_fields(self):
         """Returns dictionary of field names and types from given Yahoo YQL field names.
 
