@@ -521,7 +521,8 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
-        self.test_quote = YahooCSVQuote(self.test_code, defer=True)
+        self.test_fields = ['Code', 'Close', 'Date', 'Time', ]
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
 
         self.test_price = Decimal('3.32')
         self.test_price_date = date(2013, 4, 10)
