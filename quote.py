@@ -297,6 +297,12 @@ class YahooCSVQuote(QuoteBase):
 
     @property
     def _known_fields(self):
+        """Returns the known fields of this quote model.
+
+        Known fields is a dictionary of CSV query column symbols as the keys,
+        and the output field name and field data type as the values.
+
+        """
         return {
             'd1': ('Date', YahooCSVQuote.parse_date),
             'g': ('Low', Decimal),
