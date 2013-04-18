@@ -355,19 +355,26 @@ class YahooCSVQuote(QuoteBase):
         raised.
 
         """
-        output = []
+        # If after all fields, just return the ones we have defined
+        if self.fields == '*':
+            return self._known_fields
 
-        for symbol in self.parsed_symbols:
-            if not self._known_columns.has_key(symbol):
-                raise NotImplementedError('Symbol: %s is not known or unhandled' % (symbol, ))
+        output = {}
 
-            # Find symbol in our known symbols
-            data_name, data_type = self._known_columns[symbol]
+        # Determine the query columns
+        columns = [self.get_column_from_field(field) for field in self.fields]
+
+        for column in columns:
+            if not self._known_fields.has_key(column):
+                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
+
+            # Find field in our known fields
+            data_name, data_type = self._known_fields[column]
 
             # Add the field name and type to the output
-            output.append((data_name, data_type))
+            output[column] = (data_name, data_type)
 
-        return tuple(output)
+        return output
 
     def get_raw_quote(self):
         """Get a quote from the Yahoo Finance CSV API and return the result.

@@ -571,7 +571,7 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
         self.assertEqual(self.test_quote.price_time, self.test_price_time)
 
 
-class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
+class YahooCSVQuoteGetQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `YahooCSVQuote`.`get_quote_fields` function.
 
     The `get_quote_fields` function should return a tuple of two-tuples
@@ -582,41 +582,43 @@ class GetYahooCSVQuoteFieldsTestCase(unittest.TestCase):
 
     """
     def setUp(self):
+        def setUp(self):
         self.test_code = 'ABC'
-        self.test_data = [
-            [
-                ('n', 's', 'x', 'l1'),
-                (
-                    ('Name', str), ('Code', str), ('Exchange', str), ('Close', Decimal),
-                ),
-            ],
-            [
-                ('s', 'o', 'h', 'g', 'l1', 'v'),
-                (
-                    ('Code', str), ('Open', Decimal), ('High', Decimal),
-                    ('Low', Decimal), ('Close', Decimal), ('Volume', Decimal),
-                ),
-            ]
-        ]
-        self.test_unknown_symbols = [
-            ('f', ),
-        ]
+        self.test_fields = ['Code', 'Close', 'Volume']
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_fields = {
+            's': ('Code', str),
+            'l1': ('Close', Decimal),
+            'v': ('Volume', Decimal),
+        }
+
+        self.test_get_all_fields = '*'
+        self.test_quote_all_fields = YahooCSVQuote(
+            self.test_code, self.test_get_all_fields, defer=True
+        )
+
+        self.test_unknown_fields = ['RandomField', ]
+        self.test_quote_unknown_fields = YahooCSVQuote(
+            self.test_code, self.test_unknown_fields, defer=True
+        )
 
     def test_get_quote_fields(self):
-        """get_quote_fields should return dictionary from tuple of symbols."""
-        for symbol_tuple, field_tuples in self.test_data:
-            quote = YahooCSVQuote(self.test_code, defer=True)
-            # Explicitly set the parsed_symbols (or make this dependant on parse_symbols)
-            quote.parsed_symbols = symbol_tuple
-            self.assertEqual(quote.get_quote_fields(), field_tuples)
+        """get_quote_fields should return dictionary of tuples of field names."""
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
 
-    def test_unknown_symbols(self):
-        """get_quote_fields should raise Exception if the symbol is inknown."""
-        for symbol_tuple in self.test_unknown_symbols:
-            quote = YahooCSVQuote(self.test_code, defer=True)
-            # Explicitly set the parsed symbols (or make this dependant on parse_symbols)
-            quote.parsed_symbols = symbol_tuple
-            self.assertRaises(Exception, quote.get_quote_fields)
+    def test_get_all_fields(self):
+        """get_quote_fields should return dictionary of tuples of all field names."""
+        field_dict = self.test_quote_all_fields.get_quote_fields()
+
+        # Because the number of fields in the CSV quote is high, difficult to check
+        # with predefined ones in a test case.
+        self.assertTrue(isinstance(field_dict, dict))
+        self.assertTrue(len(field_dict.keys()) > 0)
+
+    def test_unknown_fields(self):
+        """get_quote_fields should raise Exception if the field is unknown."""
+        self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
+
 
 
 class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
