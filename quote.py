@@ -389,10 +389,19 @@ class YahooCSVQuote(QuoteBase):
         # Only interested in Australian equities at the moment
         exchange = 'AX'
 
+        # Determine the query columns
+        if self.fields == '*':
+            columns = self._known_fields.keys()
+        else:
+            columns = [self.get_column_from_field(field) for field in self.fields]
+
+        # Join as a single string
+        columns = ''.join(columns)
+
         quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
-            '?s=%(code)s.%(exchange)s&f=%(symbols)s' \
+            '?s=%(code)s.%(exchange)s&f=%(columns)s' \
             % {
-                'code': self.code, 'exchange': exchange, 'symbols': self.symbols,
+                'code': self.code, 'exchange': exchange, 'columns': columns,
             }
 
         response = urllib2.urlopen(quote_url)

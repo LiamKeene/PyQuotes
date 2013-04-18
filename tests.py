@@ -767,7 +767,7 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
         self.assertRaises(Exception, self.test_quote_no_fields.parse_quote)
 
 
-class GetRawYahooCSVQuoteTestCase(unittest.TestCase):
+class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
     """The `YahooCSVQuote`.`get_raw_quote` function should query Yahoo's finance CSV API and
     return the latest quote for a particular stock (delayed by 20min).
 
@@ -776,40 +776,32 @@ class GetRawYahooCSVQuoteTestCase(unittest.TestCase):
         self.good_code = 'ABC'
         self.bad_code = 'A'
 
-        self.csv_symbols = 'nsx'
-        self.csv_columns = ('n', 's', 'x')
-        self.csv_fields = (('Name', str), ('Code', str), ('Exchange', str))
-        self.csv_data = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
+        self.fields = ['Name', 'Code', 'Exchange', ]
+
+        # Expected raw quote
+        self.test_raw_quote = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
 
         self.test_good_quote = YahooCSVQuote(self.good_code, defer=True)
-        # Explicitly set the fields (or make this dependant on get_quote_fields)
-        self.test_good_quote.fields = self.csv_fields
 
         self.test_bad_quote = YahooCSVQuote(self.bad_code, defer=True)
-        # Explicitly set the fields (or make this dependant on get_quote_fields)
-        self.test_bad_quote.fields = self.csv_fields
 
-        self.test_quote_columns = YahooCSVQuote(self.good_code, self.csv_symbols, defer=True)
-        # Explicitly set the fields (or make this dependant on get_quote_fields)
-        self.test_quote_columns.fields = self.csv_fields
+        self.test_quote_fields = YahooCSVQuote(self.good_code, self.fields, defer=True)
 
-    def test_csv_quote_good_code(self):
-        """get_raw_quote should return True given a valid code."""
+    def test_quote_good_code(self):
+        """YahooCSVQuote.get_raw_quote should return True given a valid code."""
         raw_quote = self.test_good_quote.get_raw_quote()
 
-        # Because the number of fields in the CSV quote is high, difficult to check
+        # Because the number of fields in the CSVquote is high, difficult to check
         # with predefined ones in a test case.
         self.assertTrue(raw_quote is not None)
 
-    def test_csv_quote_bad_code(self):
-        """get_raw_quote should raise an Exception given an invalid code."""
+    def test_quote_bad_code(self):
+        """YahooCSVQuote.get_raw_quote should raise an Exception given an invalid code."""
         self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
 
-    def test_csv_quote_get_columns(self):
-        """get_raw_quote should return the requested columns only."""
-        raw_quote = self.test_quote_columns.get_raw_quote()
-
-        self.assertEqual(raw_quote, self.csv_data)
+    def test_quote_get_fields(self):
+        """YahooCSVQuote.get_raw_quote should return the requested fields only."""
+        self.assertEqual(self.test_quote_fields.get_raw_quote(), self.test_raw_quote)
 
 
 class YahooQuoteHistoryTestCase(unittest.TestCase):
