@@ -528,12 +528,12 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
         self.test_price_time = time(12, 20, 0)
 
         # Explicitly set the fields and raw quote
-        self.test_quote.fields = (
-            ('Code', str),
-            ('Close', Decimal)
-            ('Date', self.test_quote.parse_date),
-            ('Time', self.test_quote.parse_time),
-        )
+        self.test_quote.quote_fields = {
+            's': ('Code', str),
+            'l1': ('Close', Decimal),
+            'd1': ('Date', self.test_quote.parse_date),
+            't1': ('Time', self.test_quote.parse_time),
+        }
 
         self.test_quote.raw_quote = '"ABCAX",3.320,"4/10/2013","10:21pm"\r\n'
 
@@ -718,7 +718,7 @@ class YahooCSVQuoteParseSymbolsTestCase(unittest.TestCase):
         ]
 
 
-class ParseYahooCSVQuoteTestCase(unittest.TestCase):
+class YahooCSVQuoteParseQuoteTestCase(unittest.TestCase):
     """The `YahooCSVQuote`.`parse_quote` function should correctly parse the information
     from a Yahoo CSV stock quote.
 
@@ -726,14 +726,18 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
     def setUp(self):
         # Create three test quote objects
         self.test_code = 'ABC'
-        self.test_symbols = 'nl1v'
-        self.test_fields = (('Code', str), ('Close', Decimal), ('Volume', Decimal), )
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_symbols, defer=True)
-        self.test_quote_partial = YahooCSVQuote(self.test_code, self.test_symbols, defer=True)
-        self.test_quote_no_fields = YahooCSVQuote(self.test_code, self.test_symbols, defer=True)
+        self.test_fields = ['Code', 'Close', 'Volume', ]
+        self.test_quote_fields = {
+            's': ('Code', str),
+            'l1': ('Close', Decimal),
+            'v': ('Volume', Decimal),
+        }
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_partial = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_no_fields = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
 
         # Explicitly set the quote fields and raw quote
-        self.test_quote.fields = self.test_fields
+        self.test_quote.quote_fields = self.test_quote_fields
         self.test_quote.raw_quote = '"ABC.AX",3.330,1351200\r\n'
 
         # The parsed quote
@@ -742,7 +746,7 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
         }
 
         # Explicitly set a partial set of the quote fields
-        self.test_quote_partial.fields = (('Code', str), )
+        self.test_quote_partial.quote_fields = {'s': ('Code', str), }
         self.test_quote_partial.raw_quote = self.test_quote.raw_quote
 
         # The partially parsed quote
@@ -751,7 +755,7 @@ class ParseYahooCSVQuoteTestCase(unittest.TestCase):
         }
 
         # Explicitly set no fields to parse
-        self.test_quote_no_fields.fields = ()
+        self.test_quote_no_fields.fields = {}
         self.test_quote_no_fields.raw_quote = self.test_quote.raw_quote
 
     def test_parse_quote(self):

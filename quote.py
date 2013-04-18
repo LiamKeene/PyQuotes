@@ -464,20 +464,29 @@ class YahooCSVQuote(QuoteBase):
         Given a dictionary containing the fields to include in the result.
 
         """
-        if self.fields == () or self.fields is None:
+        if self.quote_fields == {} or self.quote_fields is None:
             raise Exception('Quote cannot be parsed without output field tuple.')
 
+        # Get the list of fieldname
+        if self.fields == '*':
+            columns = self._known_fields.keys()
+        else:
+            columns = [self.get_column_from_field(field) for field in self.fields]
+
         # Use the CSV module to parse the quote
-        reader = csv.reader(self.raw_quote.split(','))
+        reader = csv.DictReader([self.raw_quote], columns)
 
         # Read the raw data
-        raw_data = [row[0] for row in reader]
+        raw_data = [row for row in reader][0]
 
         output = {}
 
-        for i in range(len(self.fields)):
-            field_name, field_type = self.fields[i]
-            output[field_name] = field_type(raw_data[i])
+        for key, value in raw_data.items():
+            # Ignore fields in data that are not in requested field dict
+            if not self.quote_fields.has_key(key):
+                continue
+            field_name, field_type = self.quote_fields[key]
+            output[field_name] = field_type(value)
 
         return output
 
