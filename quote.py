@@ -523,7 +523,7 @@ class YahooCSVQuote(QuoteBase):
 
         """
         # Determine the field names and types
-        self.fields = self.get_quote_fields()
+        self.quote_fields = self.get_quote_fields()
 
         # Fetch the raw quote
         self.raw_quote = self.get_raw_quote()

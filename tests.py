@@ -407,7 +407,7 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
     def setUp(self):
         self.test_code = 'ABC'
 
-        self.test_symbols = 'nsx'
+        self.test_fields = ['Name', 'Code', 'Exchange', ]
 
         # Expected raw quote
         self.test_raw_quote = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
@@ -429,7 +429,7 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
 
     def test_quote_columns(self):
         """YahooCSVQuote should create a new quote object, fetch and parse given columns."""
-        quote = YahooCSVQuote(self.test_code, self.test_symbols)
+        quote = YahooCSVQuote(self.test_code, self.test_fields)
 
         self.assertEqual(quote.raw_quote, self.test_raw_quote)
 
@@ -437,10 +437,10 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
 
     def test_quote_deferred(self):
         """YahooCSVQuote should defer fetching and parsing of quote if required."""
-        quote = YahooCSVQuote(self.test_code, self.test_symbols, defer=True)
+        quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
 
         # Check quote is unprocessed
-        self.assertEqual(quote.fields, ())
+        self.assertEqual(quote.quote_fields, {})
         self.assertTrue(quote.raw_quote is None)
         self.assertTrue(quote.quote is None)
 
