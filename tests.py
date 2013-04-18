@@ -708,11 +708,13 @@ class YahooCSVQuoteParseSymbolsTestCase(unittest.TestCase):
             ),
         }
 
+        self.test_quote = YahooCSVQuote(self.test_code, defer=True)
+
     def test_parse_symbols(self):
         """parse_symbols should return a correctly parsed list of symbols."""
         [
             self.assertEqual(
-                YahooCSVQuote(self.test_code, symbol_str, defer=True).parse_symbols(),
+                self.test_quote.parse_symbols(symbol_str),
                 symbol_list
             )
             for symbol_str, symbol_list in self.test_symbols_dict.items()

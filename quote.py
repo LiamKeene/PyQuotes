@@ -286,7 +286,6 @@ class YahooCSVQuote(QuoteBase):
         self.fields = fields
 
         # Default value of quote
-        self.parsed_symbols = ()
         self.quote_fields = {}
         self.raw_quote = None
         self.quote = None
@@ -490,7 +489,7 @@ class YahooCSVQuote(QuoteBase):
 
         return output
 
-    def parse_symbols(self):
+    def parse_symbols(self, symbol_str):
         """Parse a string of Yahoo CSV symbols and return them as a tuple.
 
         This is required as the symbols are either single letters or a letter and
@@ -498,7 +497,7 @@ class YahooCSVQuote(QuoteBase):
 
         """
         # Split symbols into a list
-        symbol_list = list(self.symbols)
+        symbol_list = list(symbol_str)
 
         # Symbol output
         output = []
@@ -520,12 +519,9 @@ class YahooCSVQuote(QuoteBase):
     def process_quote(self):
         """Helper method to process a quote.
 
-        Runs the parse_symbols, get_quote_fields, get_raw_quote and parse_quote methods.
+        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
 
         """
-        # Parse the CSV symbols
-        self.parsed_symbols = self.parse_symbols()
-
         # Determine the field names and types
         self.fields = self.get_quote_fields()
 
