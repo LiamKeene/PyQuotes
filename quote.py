@@ -38,16 +38,16 @@ class QuoteBase(object):
         raise NotImplementedError('This method must be defined by subclass.')
 
 
-class YahooQuote(QuoteBase):
-    """Represents a quote that is obtained via the Yahoo Finance community table
-    using the YQL library.
+class LatestQuoteBase(QuoteBase):
+    """Abstract quote model that expands on the QuoteBase and defines methods
+    for quote models that retrieve the latest quote.
 
     """
     def __init__(self, code, fields='*', defer=False):
-        """Initialise a YahooQuote given the stock code.
+        """Initialise the quote model given the stock code.
 
-        Optionally given a list of field names that containg the required data
-        in the YQL quote (default is all fields `*`), and a boolean to determine
+        Optionally given a list of field names that contain the required data
+        in the quote (default is all fields '*'), and a boolean to determine
         whether to process the quote now or at a later time (default is False).
 
         """
@@ -63,24 +63,6 @@ class YahooQuote(QuoteBase):
         # Process quote or defer it for later
         if not defer:
             self.process_quote()
-
-    @property
-    def _known_fields(self):
-        """Returns the known fields of this quote model.
-
-        Known fields is a dictionary of YQL query column names as the keys,
-        and the output field name and field data type as the values.
-
-        """
-        return {
-            'Name': ('Name', str),
-            'LastTradeDate': ('Date', YahooQuote.parse_date),
-            'LastTradeTime': ('Time', YahooQuote.parse_time),
-            'LastTradePriceOnly': ('Close', Decimal),
-            'StockExchange': ('Exchange', str),
-            'Symbol': ('Code', str),
-            'Volume': ('Volume', Decimal),
-        }
 
     @property
     def price(self):
@@ -99,6 +81,36 @@ class YahooQuote(QuoteBase):
         if self.quote is None:
             raise Exception('Quote not parsed.')
         return self.quote['Time']
+
+    @property
+    def volume(self):
+        if self.quote is None:
+            raise Exception('Quote not parsed.')
+        return self.quote['Volume']
+
+
+class YahooQuote(QuoteBase):
+    """Represents a quote that is obtained via the Yahoo Finance community table
+    using the YQL library.
+
+    """
+    @property
+    def _known_fields(self):
+        """Returns the known fields of this quote model.
+
+        Known fields is a dictionary of YQL query column names as the keys,
+        and the output field name and field data type as the values.
+
+        """
+        return {
+            'Name': ('Name', str),
+            'LastTradeDate': ('Date', YahooQuote.parse_date),
+            'LastTradeTime': ('Time', YahooQuote.parse_time),
+            'LastTradePriceOnly': ('Close', Decimal),
+            'StockExchange': ('Exchange', str),
+            'Symbol': ('Code', str),
+            'Volume': ('Volume', Decimal),
+        }
 
     def get_column_from_field(self, field):
         """Returns the YQL query column name from the field name."""
@@ -273,27 +285,6 @@ class YahooCSVQuote(QuoteBase):
     """Represents a quote that is obtained via the Yahoo CSV API.
 
     """
-    def __init__(self, code, fields='*', defer=False):
-        """Initialise a YahooCSVQuote given the stock code.
-
-        Optionally given a list of field names that containg the required data
-        in the YQL quote (default is all fields `*`), and a boolean to determine
-        whether to process the quote now or at a later time (default is False).
-
-        """
-        # Store the stock code and columns of data to fetch
-        self.code = code
-        self.fields = fields
-
-        # Default value of quote
-        self.quote_fields = {}
-        self.raw_quote = None
-        self.quote = None
-
-        # Process quote or defer it for later
-        if not defer:
-            self.process_quote()
-
     @property
     def _known_fields(self):
         """Returns the known fields of this quote model.
@@ -314,24 +305,6 @@ class YahooCSVQuote(QuoteBase):
             'v': ('Volume', Decimal),
             'x': ('Exchange', str),
         }
-
-    @property
-    def price(self):
-        if self.quote is None:
-            raise Exception('Quote not parsed.')
-        return self.quote['Close']
-
-    @property
-    def price_date(self):
-        if self.quote is None:
-            raise Exception('Quote not parsed.')
-        return self.quote['Date']
-
-    @property
-    def price_time(self):
-        if self.quote is None:
-            raise Exception('Quote not parsed.')
-        return self.quote['Time']
 
     def get_column_from_field(self, field):
         """Returns the CSV query column name from the field name."""
