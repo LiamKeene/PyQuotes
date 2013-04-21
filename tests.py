@@ -186,6 +186,13 @@ class YahooQuoteGetAttributesTestCase(unittest.TestCase):
         # Parsed quote should have correct price
         self.assertEqual(self.test_quote.price_time, self.test_price_time)
 
+    def test_quote_volume(self):
+        """Test the quote.volume does not exist (was not in original quote."""
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        self.assertRaises(Exception, getattr, self.test_quote, 'volume')
+
 
 class YahooQuoteGetQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `YahooQuote`.`get_quote_fields` function.
@@ -570,6 +577,13 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
 
         # Parsed quote should have correct price
         self.assertEqual(self.test_quote.price_time, self.test_price_time)
+
+    def test_quote_volume(self):
+        """Test the quote.volume does not exist (was not in original quote."""
+        # Parse the quote and update the object
+        self.test_quote.quote = self.test_quote.parse_quote()
+
+        self.assertRaises(Exception, getattr, self.test_quote, 'volume')
 
 
 class YahooCSVQuoteGetQuoteFieldsTestCase(unittest.TestCase):
