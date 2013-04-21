@@ -64,45 +64,33 @@ class LatestQuoteBase(QuoteBase):
         if not defer:
             self.process_quote()
 
+    def _get_quote_data(self, field):
+        """Returns the desired quote field."""
+        if self.quote is None:
+            raise Exception('Quote not parsed.')
+        if not self.quote.has_key(field):
+            raise Exception('%s not included in original quote.' % (field, ))
+        return self.quote[field]
+
     @property
     def price(self):
         """Returns the closing (last) price."""
-        key = 'Close'
-        if self.quote is None:
-            raise Exception('Quote not parsed.')
-        if not self.quote.has_key(key):
-            raise Exception('%s not included in original quote.' % (value, ))
-        return self.quote[key]
+        return self._get_quote_data('Close')
 
     @property
     def price_date(self):
         """Returns the last price date."""
-        key = 'Date'
-        if self.quote is None:
-            raise Exception('Quote not parsed.')
-        if not self.quote.has_key(key):
-            raise Exception('%s not included in original quote.' % (value, ))
-        return self.quote[key]
+        return self._get_quote_data('Date')
 
     @property
     def price_time(self):
         """Returns the last price time."""
-        key = 'Time'
-        if self.quote is None:
-            raise Exception('Quote not parsed.')
-        if not self.quote.has_key(key):
-            raise Exception('%s not included in original quote.' % (value, ))
-        return self.quote[key]
+        return self._get_quote_data('Time')
 
     @property
     def volume(self):
         """Returns the volume traded."""
-        key = 'Volume'
-        if self.quote is None:
-            raise Exception('Quote not parsed.')
-        if not self.quote.has_key(key):
-            raise Exception('%s not included in original quote.' % (value, ))
-        return self.quote[key]
+        return self._get_quote_data('Volume')
 
 
 class YahooQuote(QuoteBase):
