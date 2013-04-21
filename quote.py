@@ -92,46 +92,22 @@ class LatestQuoteBase(QuoteBase):
         """Returns the volume traded."""
         return self._get_quote_data('Volume')
 
-
-class YahooQuote(QuoteBase):
-    """Represents a quote that is obtained via the Yahoo Finance community table
-    using the YQL library.
-
-    """
-    @property
-    def _known_fields(self):
-        """Returns the known fields of this quote model.
-
-        Known fields is a dictionary of YQL query column names as the keys,
-        and the output field name and field data type as the values.
-
-        """
-        return {
-            'Name': ('Name', str),
-            'LastTradeDate': ('Date', YahooQuote.parse_date),
-            'LastTradeTime': ('Time', YahooQuote.parse_time),
-            'LastTradePriceOnly': ('Close', Decimal),
-            'StockExchange': ('Exchange', str),
-            'Symbol': ('Code', str),
-            'Volume': ('Volume', Decimal),
-        }
-
     def get_column_from_field(self, field):
-        """Returns the YQL query column name from the field name."""
+        """Returns the quote query column name from the field name."""
         for column_name, (field_name, field_type) in self._known_fields.items():
             if field == field_name:
                 return column_name
         raise Exception('Field - %s is not known or unhandled' % (field, ))
 
     def get_field_from_column(self, column):
-        """Returns the field name from the YQL query column name."""
+        """Returns the field name from the quote query column name."""
         for column_name, (field_name, field_type) in self._known_fields.items():
             if column == column_name:
                 return field_name
         raise Exception('Column: %s is not known or unhandled' % (column, ))
 
     def get_quote_fields(self):
-        """Returns dictionary of field names and types from given YQL column names.
+        """Returns dictionary of field names and types from given quote column names.
 
         Each field needs it's name and type defined otherwise an Exception is
         raised.
@@ -157,6 +133,45 @@ class YahooQuote(QuoteBase):
             output[column] = (data_name, data_type)
 
         return output
+
+    def process_quote(self):
+        """Helper method to process a quote.
+
+        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
+
+        """
+        # Determine the field names and types
+        self.quote_fields = self.get_quote_fields()
+
+        # Fetch the raw quote
+        self.raw_quote = self.get_raw_quote()
+
+        # Parse the raw quote with the field names and types
+        self.quote = self.parse_quote()
+
+
+class YahooQuote(QuoteBase):
+    """Represents a quote that is obtained via the Yahoo Finance community table
+    using the YQL library.
+
+    """
+    @property
+    def _known_fields(self):
+        """Returns the known fields of this quote model.
+
+        Known fields is a dictionary of YQL query column names as the keys,
+        and the output field name and field data type as the values.
+
+        """
+        return {
+            'Name': ('Name', str),
+            'LastTradeDate': ('Date', YahooQuote.parse_date),
+            'LastTradeTime': ('Time', YahooQuote.parse_time),
+            'LastTradePriceOnly': ('Close', Decimal),
+            'StockExchange': ('Exchange', str),
+            'Symbol': ('Code', str),
+            'Volume': ('Volume', Decimal),
+        }
 
     def get_raw_quote(self):
         """Get a quote from the Yahoo YQL finance tables and return the result.
@@ -269,21 +284,6 @@ class YahooQuote(QuoteBase):
 
         return output
 
-    def process_quote(self):
-        """Helper method to process a quote.
-
-        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
-
-        """
-        # Determine the field names and types
-        self.quote_fields = self.get_quote_fields()
-
-        # Fetch the raw quote
-        self.raw_quote = self.get_raw_quote()
-
-        # Parse the raw quote with the field names and types
-        self.quote = self.parse_quote()
-
 
 class YahooCSVQuote(QuoteBase):
     """Represents a quote that is obtained via the Yahoo CSV API.
@@ -309,48 +309,6 @@ class YahooCSVQuote(QuoteBase):
             'v': ('Volume', Decimal),
             'x': ('Exchange', str),
         }
-
-    def get_column_from_field(self, field):
-        """Returns the CSV query column name from the field name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if field == field_name:
-                return column_name
-        raise Exception('Field - %s is not known or unhandled' % (field, ))
-
-    def get_field_from_column(self, column):
-        """Returns the field name from the CSV query column name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if column == column_name:
-                return field_name
-        raise Exception('Column: %s is not known or unhandled' % (column, ))
-
-    def get_quote_fields(self):
-        """Returns field names and types from given Yahoo CSV symbols.
-
-        Each symbol needs it's name and type defined otherwise an Exception is
-        raised.
-
-        """
-        # If after all fields, just return the ones we have defined
-        if self.fields == '*':
-            return self._known_fields
-
-        output = {}
-
-        # Determine the query columns
-        columns = [self.get_column_from_field(field) for field in self.fields]
-
-        for column in columns:
-            if not self._known_fields.has_key(column):
-                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
-
-            # Find field in our known fields
-            data_name, data_type = self._known_fields[column]
-
-            # Add the field name and type to the output
-            output[column] = (data_name, data_type)
-
-        return output
 
     def get_raw_quote(self):
         """Get a quote from the Yahoo Finance CSV API and return the result.
@@ -492,21 +450,6 @@ class YahooCSVQuote(QuoteBase):
                 output[count-1] = '%s%s' % (symbol_list[i-1], symbol_list[i])
 
         return tuple(output)
-
-    def process_quote(self):
-        """Helper method to process a quote.
-
-        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
-
-        """
-        # Determine the field names and types
-        self.quote_fields = self.get_quote_fields()
-
-        # Fetch the raw quote
-        self.raw_quote = self.get_raw_quote()
-
-        # Parse the raw quote with the field names and types
-        self.quote = self.parse_quote()
 
 
 class YahooQuoteHistory(QuoteBase):
