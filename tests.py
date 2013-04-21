@@ -56,76 +56,6 @@ class YahooQuoteTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
-class YahooQuoteParseDateTestCase(unittest.TestCase):
-    """Test Case for the YahooQuote.parse_date function.
-
-    """
-    def setUp(self):
-        self.test_quote = YahooQuote('ABC', defer=True)
-        self.test_raw_date = '10/04/2013'
-        self.test_parsed_date = date(2013, 4, 10)
-
-    def test_parse_date(self):
-        """parse_date should parse a Yahoo YQL date correctly."""
-        self.assertEqual(
-            self.test_quote.parse_date(self.test_raw_date),
-            self.test_parsed_date
-        )
-
-
-class YahooQuoteParseDateTimeTestCase(unittest.TestCase):
-    """Test Case for the YahooQuote.parse_date_time function.
-
-    The Yahoo YQL quotes are given in the US/Eastern timezone, which must then
-    be converted to the timezone specified in the project settings.
-
-    Uses the django.utils.timezone module, which in turn uses pytz or a custom class.
-
-    """
-    def setUp(self):
-        # Create a deferred quote
-        self.test_quote = YahooQuote('ABC', defer=True)
-
-        # The raw date and time from a quote (not called so we can control them)
-        self.test_raw_date = '04/10/2013'
-        self.test_raw_time = '10:21pm'
-
-        # Get the desired timezone from the quote module
-        time_zone = TIME_ZONE
-
-        # Create timezone used in the quote
-        self.test_time_zone = pytz.timezone(time_zone)
-
-        # The parsed date/time in the desired timezone
-        self.test_parsed_datetime = datetime(
-            2013, 4, 11, 12, 21, tzinfo=self.test_time_zone
-        )
-
-    def test_parse_date_time(self):
-        """parse_date_time should parse a Yahoo YQL date and time correctly."""
-        self.assertEqual(
-            self.test_quote.parse_datetime(self.test_raw_date, self.test_raw_time),
-            self.test_parsed_datetime
-        )
-
-
-class YahooQuoteParseTimeTestCase(unittest.TestCase):
-    """Test Case for the YahooQuote.parse_time function.
-
-    """
-    def setUp(self):
-        self.test_quote = YahooQuote('ABC', defer=True)
-        self.test_raw_time = '10:21pm'
-        self.test_parsed_time = time(22, 21)
-
-    def test_parse_time(self):
-        """parse_time should parse a Yahoo YQL time correctly."""
-        self.assertEqual(
-            self.test_quote.parse_time(self.test_raw_time),
-            self.test_parsed_time
-        )
-
-
 class YahooQuoteGetAttributesTestCase(unittest.TestCase):
     """Test Case for the attributes of a YahooQuote.
 
@@ -192,51 +122,6 @@ class YahooQuoteGetAttributesTestCase(unittest.TestCase):
         self.test_quote.quote = self.test_quote.parse_quote()
 
         self.assertRaises(Exception, getattr, self.test_quote, 'volume')
-
-
-class YahooQuoteGetQuoteFieldsTestCase(unittest.TestCase):
-    """Test Case for the `YahooQuote`.`get_quote_fields` function.
-
-    The `get_quote_fields` function should return a dictionary of two-tuples
-    that contain the output field names and data type given the quote field names.
-
-    """
-    def setUp(self):
-        self.test_code = 'ABC'
-        self.test_fields = ['Code', 'Close', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
-        self.test_quote_fields = {
-            'Symbol': ('Code', str),
-            'LastTradePriceOnly': ('Close', Decimal),
-            'Volume': ('Volume', Decimal),
-        }
-
-        self.test_get_all_fields = '*'
-        self.test_quote_all_fields = YahooQuote(
-            self.test_code, self.test_get_all_fields, defer=True
-        )
-
-        self.test_unknown_fields = ['RandomField', ]
-        self.test_quote_unknown_fields = YahooQuote(
-            self.test_code, self.test_unknown_fields, defer=True
-        )
-
-    def test_get_quote_fields(self):
-        """get_quote_fields should return dictionary of tuples of field names."""
-        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
-
-    def test_get_all_fields(self):
-        """get_quote_fields should return dictionary of tuples of all field names."""
-        field_dict = self.test_quote_all_fields.get_quote_fields()
-
-        # Because the number of fields in the YQL quote is high, difficult to check
-        # with predefined ones in a test case.
-        self.assertTrue(isinstance(field_dict, dict))
-        self.assertTrue(len(field_dict.keys()) > 0)
-
-    def test_unknown_fields(self):
-        """get_quote_fields should raise Exception if the field is unknown."""
-        self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
 
 
 class YahooQuoteGetColumnFromFieldTestCase(TestCase):
@@ -307,6 +192,51 @@ class YahooQuoteGetFieldFromColumnTestCase(TestCase):
         )
 
 
+class YahooQuoteGetQuoteFieldsTestCase(unittest.TestCase):
+    """Test Case for the `YahooQuote`.`get_quote_fields` function.
+
+    The `get_quote_fields` function should return a dictionary of two-tuples
+    that contain the output field names and data type given the quote field names.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_fields = ['Code', 'Close', 'Volume']
+        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_fields = {
+            'Symbol': ('Code', str),
+            'LastTradePriceOnly': ('Close', Decimal),
+            'Volume': ('Volume', Decimal),
+        }
+
+        self.test_get_all_fields = '*'
+        self.test_quote_all_fields = YahooQuote(
+            self.test_code, self.test_get_all_fields, defer=True
+        )
+
+        self.test_unknown_fields = ['RandomField', ]
+        self.test_quote_unknown_fields = YahooQuote(
+            self.test_code, self.test_unknown_fields, defer=True
+        )
+
+    def test_get_quote_fields(self):
+        """get_quote_fields should return dictionary of tuples of field names."""
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
+
+    def test_get_all_fields(self):
+        """get_quote_fields should return dictionary of tuples of all field names."""
+        field_dict = self.test_quote_all_fields.get_quote_fields()
+
+        # Because the number of fields in the YQL quote is high, difficult to check
+        # with predefined ones in a test case.
+        self.assertTrue(isinstance(field_dict, dict))
+        self.assertTrue(len(field_dict.keys()) > 0)
+
+    def test_unknown_fields(self):
+        """get_quote_fields should raise Exception if the field is unknown."""
+        self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
+
+
 class YahooQuoteGetRawQuoteTestCase(unittest.TestCase):
     """Test Case for `YahooQuote`.`get_raw_quote` function.
 
@@ -347,6 +277,59 @@ class YahooQuoteGetRawQuoteTestCase(unittest.TestCase):
     def test_quote_get_fields(self):
         """YahooQuote.get_raw_quote should return the requested fields only."""
         self.assertEqual(self.test_quote_fields.get_raw_quote(), self.test_raw_quote)
+
+
+class YahooQuoteParseDateTestCase(unittest.TestCase):
+    """Test Case for the YahooQuote.parse_date function.
+
+    """
+    def setUp(self):
+        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_raw_date = '04/10/2013'
+        self.test_parsed_date = date(2013, 4, 10)
+
+    def test_parse_date(self):
+        """parse_date should parse a Yahoo YQL date correctly."""
+        self.assertEqual(
+            self.test_quote.parse_date(self.test_raw_date),
+            self.test_parsed_date
+        )
+
+
+class YahooQuoteParseDateTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooQuote.parse_date_time function.
+
+    The Yahoo YQL quotes are given in the US/Eastern timezone, which must then
+    be converted to the timezone specified in the project settings.
+
+    Uses the django.utils.timezone module, which in turn uses pytz or a custom class.
+
+    """
+    def setUp(self):
+        # Create a deferred quote
+        self.test_quote = YahooQuote('ABC', defer=True)
+
+        # The raw date and time from a quote (not called so we can control them)
+        self.test_raw_date = '04/10/2013'
+        self.test_raw_time = '10:21pm'
+
+        # Get the desired timezone from the quote module
+        time_zone = TIME_ZONE
+
+        # Create timezone used in the quote
+        self.test_time_zone = pytz.timezone(time_zone)
+
+        # The parsed date/time in the desired timezone
+        self.test_parsed_datetime = datetime(
+            2013, 4, 11, 12, 21, tzinfo=self.test_time_zone
+        )
+
+    def test_parse_date_time(self):
+        """parse_date_time should parse a Yahoo YQL date and time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_datetime(self.test_raw_date, self.test_raw_time),
+            self.test_parsed_datetime
+        )
 
 
 class YahooQuoteParseQuoteTestCase(unittest.TestCase):
@@ -407,6 +390,23 @@ class YahooQuoteParseQuoteTestCase(unittest.TestCase):
         self.assertRaises(Exception, self.test_quote_no_fields.parse_quote)
 
 
+class YahooQuoteParseTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooQuote.parse_time function.
+
+    """
+    def setUp(self):
+        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_raw_time = '10:21pm'
+        self.test_parsed_time = time(22, 21)
+
+    def test_parse_time(self):
+        """parse_time should parse a Yahoo YQL time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_time(self.test_raw_time),
+            self.test_parsed_time
+        )
+
+
 class YahooCSVQuoteTestCase(unittest.TestCase):
     """Test Case for the YahooCSVQuote model.
 
@@ -450,76 +450,6 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
         self.assertEqual(quote.quote_fields, {})
         self.assertTrue(quote.raw_quote is None)
         self.assertTrue(quote.quote is None)
-
-
-class YahooCSVQuoteParseDateTestCase(unittest.TestCase):
-    """Test Case for the YahooCSVQuote.parse_date function.
-
-    """
-    def setUp(self):
-        self.test_quote = YahooCSVQuote('ABC', defer=True)
-        self.test_raw_date = '04/10/2013'
-        self.test_parsed_date = date(2013, 4, 10)
-
-    def test_parse_date(self):
-        """parse_date should parse a Yahoo CSV date correctly."""
-        self.assertEqual(
-            self.test_quote.parse_date(self.test_raw_date),
-            self.test_parsed_date
-        )
-
-
-class YahooCSVQuoteParseDateTimeTestCase(unittest.TestCase):
-    """Test Case for the YahooCSVQuote.parse_date_time function.
-
-    The Yahoo CSV quotes are given in the US/Eastern timezone, which must then
-    be converted to the timezone specified in the project settings.
-
-    Uses the django.utils.timezone module, which in turn uses pytz or a custom class.
-
-    """
-    def setUp(self):
-        # Create a deferred quote
-        self.test_quote = YahooQuote('ABC', defer=True)
-
-        # The raw date and time from a quote (not called so we can control them)
-        self.test_raw_date = '04/10/2013'
-        self.test_raw_time = '10:21pm'
-
-        # Get the desired timezone from the quote module
-        time_zone = TIME_ZONE
-
-        # Create timezone used in the quote
-        self.test_time_zone = pytz.timezone(time_zone)
-
-        # The parsed date/time in the desired timezone
-        self.test_parsed_datetime = datetime(
-            2013, 4, 11, 12, 21, tzinfo=self.test_time_zone
-        )
-
-    def test_parse_date_time(self):
-        """parse_date_time should parse a Yahoo CSV date and time correctly."""
-        self.assertEqual(
-            self.test_quote.parse_datetime(self.test_raw_date, self.test_raw_time),
-            self.test_parsed_datetime
-        )
-
-
-class YahooCSVQuoteParseTimeTestCase(unittest.TestCase):
-    """Test Case for the YahooCSVQuote.parse_time function.
-
-    """
-    def setUp(self):
-        self.test_quote = YahooCSVQuote('ABC', defer=True)
-        self.test_raw_time = '10:21pm'
-        self.test_parsed_time = time(22, 21)
-
-    def test_parse_time(self):
-        """parse_time should parse a Yahoo CSV time correctly."""
-        self.assertEqual(
-            self.test_quote.parse_time(self.test_raw_time),
-            self.test_parsed_time
-        )
 
 
 class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
@@ -584,56 +514,6 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
         self.test_quote.quote = self.test_quote.parse_quote()
 
         self.assertRaises(Exception, getattr, self.test_quote, 'volume')
-
-
-class YahooCSVQuoteGetQuoteFieldsTestCase(unittest.TestCase):
-    """Test Case for the `YahooCSVQuote`.`get_quote_fields` function.
-
-    The `get_quote_fields` function should return a tuple of two-tuples
-    that contain the single CSV quote field names and data type given field symbols.
-
-    The symbols are found at this url http://www.jarloo.com/yahoo_finance/ and
-    are hard-coded here (a db model or fixtures may be useful in the future).
-
-    """
-    def setUp(self):
-        def setUp(self):
-        self.test_code = 'ABC'
-        self.test_fields = ['Code', 'Close', 'Volume']
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
-        self.test_quote_fields = {
-            's': ('Code', str),
-            'l1': ('Close', Decimal),
-            'v': ('Volume', Decimal),
-        }
-
-        self.test_get_all_fields = '*'
-        self.test_quote_all_fields = YahooCSVQuote(
-            self.test_code, self.test_get_all_fields, defer=True
-        )
-
-        self.test_unknown_fields = ['RandomField', ]
-        self.test_quote_unknown_fields = YahooCSVQuote(
-            self.test_code, self.test_unknown_fields, defer=True
-        )
-
-    def test_get_quote_fields(self):
-        """get_quote_fields should return dictionary of tuples of field names."""
-        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
-
-    def test_get_all_fields(self):
-        """get_quote_fields should return dictionary of tuples of all field names."""
-        field_dict = self.test_quote_all_fields.get_quote_fields()
-
-        # Because the number of fields in the CSV quote is high, difficult to check
-        # with predefined ones in a test case.
-        self.assertTrue(isinstance(field_dict, dict))
-        self.assertTrue(len(field_dict.keys()) > 0)
-
-    def test_unknown_fields(self):
-        """get_quote_fields should raise Exception if the field is unknown."""
-        self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
-
 
 
 class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
@@ -704,35 +584,143 @@ class YahooCSVQuoteGetFieldFromColumnTestCase(TestCase):
         )
 
 
-class YahooCSVQuoteParseSymbolsTestCase(unittest.TestCase):
-    """Test Case for the `YahooCSVQuote`.`parse_symbols` function.
+class YahooCSVQuoteGetQuoteFieldsTestCase(unittest.TestCase):
+    """Test Case for the `YahooCSVQuote`.`get_quote_fields` function.
 
-    The `parse_symbols` function should parse a string of Yahoo CSV tags
-    into a tuple of those tags.  Not as simple as it sounds as some tags consist
-    of a letter and number.
+    The `get_quote_fields` function should return a tuple of two-tuples
+    that contain the single CSV quote field names and data type given field symbols.
+
+    The symbols are found at this url http://www.jarloo.com/yahoo_finance/ and
+    are hard-coded here (a db model or fixtures may be useful in the future).
 
     """
     def setUp(self):
+        def setUp(self):
         self.test_code = 'ABC'
-        self.test_symbols_dict = {
-            'nsx': ('n', 's', 'x'),
-            'ohgl1v': ('o', 'h', 'g', 'l1', 'v', ),
-            'nsl1hr5j1ym3m4n4xd1': (
-                'n', 's', 'l1', 'h', 'r5', 'j1', 'y', 'm3', 'm4', 'n4', 'x', 'd1'
-            ),
+        self.test_fields = ['Code', 'Close', 'Volume']
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote_fields = {
+            's': ('Code', str),
+            'l1': ('Close', Decimal),
+            'v': ('Volume', Decimal),
         }
 
-        self.test_quote = YahooCSVQuote(self.test_code, defer=True)
+        self.test_get_all_fields = '*'
+        self.test_quote_all_fields = YahooCSVQuote(
+            self.test_code, self.test_get_all_fields, defer=True
+        )
 
-    def test_parse_symbols(self):
-        """parse_symbols should return a correctly parsed list of symbols."""
-        [
-            self.assertEqual(
-                self.test_quote.parse_symbols(symbol_str),
-                symbol_list
-            )
-            for symbol_str, symbol_list in self.test_symbols_dict.items()
-        ]
+        self.test_unknown_fields = ['RandomField', ]
+        self.test_quote_unknown_fields = YahooCSVQuote(
+            self.test_code, self.test_unknown_fields, defer=True
+        )
+
+    def test_get_quote_fields(self):
+        """get_quote_fields should return dictionary of tuples of field names."""
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
+
+    def test_get_all_fields(self):
+        """get_quote_fields should return dictionary of tuples of all field names."""
+        field_dict = self.test_quote_all_fields.get_quote_fields()
+
+        # Because the number of fields in the CSV quote is high, difficult to check
+        # with predefined ones in a test case.
+        self.assertTrue(isinstance(field_dict, dict))
+        self.assertTrue(len(field_dict.keys()) > 0)
+
+    def test_unknown_fields(self):
+        """get_quote_fields should raise Exception if the field is unknown."""
+        self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
+
+
+class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
+    """The `YahooCSVQuote`.`get_raw_quote` function should query Yahoo's finance CSV API and
+    return the latest quote for a particular stock (delayed by 20min).
+
+    """
+    def setUp(self):
+        self.good_code = 'ABC'
+        self.bad_code = 'A'
+
+        self.fields = ['Name', 'Code', 'Exchange', ]
+
+        # Expected raw quote
+        self.test_raw_quote = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
+
+        self.test_good_quote = YahooCSVQuote(self.good_code, defer=True)
+
+        self.test_bad_quote = YahooCSVQuote(self.bad_code, defer=True)
+
+        self.test_quote_fields = YahooCSVQuote(self.good_code, self.fields, defer=True)
+
+    def test_quote_good_code(self):
+        """YahooCSVQuote.get_raw_quote should return True given a valid code."""
+        raw_quote = self.test_good_quote.get_raw_quote()
+
+        # Because the number of fields in the CSVquote is high, difficult to check
+        # with predefined ones in a test case.
+        self.assertTrue(raw_quote is not None)
+
+    def test_quote_bad_code(self):
+        """YahooCSVQuote.get_raw_quote should raise an Exception given an invalid code."""
+        self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
+
+    def test_quote_get_fields(self):
+        """YahooCSVQuote.get_raw_quote should return the requested fields only."""
+        self.assertEqual(self.test_quote_fields.get_raw_quote(), self.test_raw_quote)
+
+
+class YahooCSVQuoteParseDateTestCase(unittest.TestCase):
+    """Test Case for the YahooCSVQuote.parse_date function.
+
+    """
+    def setUp(self):
+        self.test_quote = YahooCSVQuote('ABC', defer=True)
+        self.test_raw_date = '04/10/2013'
+        self.test_parsed_date = date(2013, 4, 10)
+
+    def test_parse_date(self):
+        """parse_date should parse a Yahoo CSV date correctly."""
+        self.assertEqual(
+            self.test_quote.parse_date(self.test_raw_date),
+            self.test_parsed_date
+        )
+
+
+class YahooCSVQuoteParseDateTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooCSVQuote.parse_date_time function.
+
+    The Yahoo CSV quotes are given in the US/Eastern timezone, which must then
+    be converted to the timezone specified in the project settings.
+
+    Uses the django.utils.timezone module, which in turn uses pytz or a custom class.
+
+    """
+    def setUp(self):
+        # Create a deferred quote
+        self.test_quote = YahooQuote('ABC', defer=True)
+
+        # The raw date and time from a quote (not called so we can control them)
+        self.test_raw_date = '04/10/2013'
+        self.test_raw_time = '10:21pm'
+
+        # Get the desired timezone from the quote module
+        time_zone = TIME_ZONE
+
+        # Create timezone used in the quote
+        self.test_time_zone = pytz.timezone(time_zone)
+
+        # The parsed date/time in the desired timezone
+        self.test_parsed_datetime = datetime(
+            2013, 4, 11, 12, 21, tzinfo=self.test_time_zone
+        )
+
+    def test_parse_date_time(self):
+        """parse_date_time should parse a Yahoo CSV date and time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_datetime(self.test_raw_date, self.test_raw_time),
+            self.test_parsed_datetime
+        )
 
 
 class YahooCSVQuoteParseQuoteTestCase(unittest.TestCase):
@@ -788,41 +776,52 @@ class YahooCSVQuoteParseQuoteTestCase(unittest.TestCase):
         self.assertRaises(Exception, self.test_quote_no_fields.parse_quote)
 
 
-class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
-    """The `YahooCSVQuote`.`get_raw_quote` function should query Yahoo's finance CSV API and
-    return the latest quote for a particular stock (delayed by 20min).
+class YahooCSVQuoteParseSymbolsTestCase(unittest.TestCase):
+    """Test Case for the `YahooCSVQuote`.`parse_symbols` function.
+
+    The `parse_symbols` function should parse a string of Yahoo CSV tags
+    into a tuple of those tags.  Not as simple as it sounds as some tags consist
+    of a letter and number.
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-        self.bad_code = 'A'
+        self.test_code = 'ABC'
+        self.test_symbols_dict = {
+            'nsx': ('n', 's', 'x'),
+            'ohgl1v': ('o', 'h', 'g', 'l1', 'v', ),
+            'nsl1hr5j1ym3m4n4xd1': (
+                'n', 's', 'l1', 'h', 'r5', 'j1', 'y', 'm3', 'm4', 'n4', 'x', 'd1'
+            ),
+        }
 
-        self.fields = ['Name', 'Code', 'Exchange', ]
+        self.test_quote = YahooCSVQuote(self.test_code, defer=True)
 
-        # Expected raw quote
-        self.test_raw_quote = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
+    def test_parse_symbols(self):
+        """parse_symbols should return a correctly parsed list of symbols."""
+        [
+            self.assertEqual(
+                self.test_quote.parse_symbols(symbol_str),
+                symbol_list
+            )
+            for symbol_str, symbol_list in self.test_symbols_dict.items()
+        ]
 
-        self.test_good_quote = YahooCSVQuote(self.good_code, defer=True)
 
-        self.test_bad_quote = YahooCSVQuote(self.bad_code, defer=True)
+class YahooCSVQuoteParseTimeTestCase(unittest.TestCase):
+    """Test Case for the YahooCSVQuote.parse_time function.
 
-        self.test_quote_fields = YahooCSVQuote(self.good_code, self.fields, defer=True)
+    """
+    def setUp(self):
+        self.test_quote = YahooCSVQuote('ABC', defer=True)
+        self.test_raw_time = '10:21pm'
+        self.test_parsed_time = time(22, 21)
 
-    def test_quote_good_code(self):
-        """YahooCSVQuote.get_raw_quote should return True given a valid code."""
-        raw_quote = self.test_good_quote.get_raw_quote()
-
-        # Because the number of fields in the CSVquote is high, difficult to check
-        # with predefined ones in a test case.
-        self.assertTrue(raw_quote is not None)
-
-    def test_quote_bad_code(self):
-        """YahooCSVQuote.get_raw_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
-
-    def test_quote_get_fields(self):
-        """YahooCSVQuote.get_raw_quote should return the requested fields only."""
-        self.assertEqual(self.test_quote_fields.get_raw_quote(), self.test_raw_quote)
+    def test_parse_time(self):
+        """parse_time should parse a Yahoo CSV time correctly."""
+        self.assertEqual(
+            self.test_quote.parse_time(self.test_raw_time),
+            self.test_parsed_time
+        )
 
 
 class YahooQuoteHistoryTestCase(unittest.TestCase):
@@ -895,7 +894,45 @@ class YahooQuoteHistoryTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
-class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
+class YahooQuoteHistoryGetColumnFromFieldTestCase(TestCase):
+    """Test Case for the `YahooQuoteHistory`.`get_column_from_field` function.
+
+    The `get_column_from_field` function should return the column name if given
+    the output field name.  Basically works the reverse of `get_quote_fields`.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_columns = ['Date', 'Close', 'Adj_Close']
+        self.test_quote = YahooQuoteHistory(
+            self.test_code, self.test_dates, self.test_columns, defer=True
+        )
+        # These are the field output names in the parsed quote
+        self.test_fields = ['Date', 'Close', 'Adj Close']
+
+        self.test_unknown_field = 'RandomField'
+
+    def test_get_column_from_field(self):
+        """get_column_from_field should return quote column name given the field output."""
+        [
+            self.assertEqual(
+                self.test_quote.get_column_from_field(self.test_fields[i]),
+                self.test_columns[i]
+            )
+            for i in range(len(self.test_columns))
+        ]
+
+    def test_get_column_from_field_not_found(self):
+        """get_column_from_field should raise Exception if the field is unknown."""
+        self.assertRaises(
+            Exception,
+            self.test_quote.get_column_from_field,
+            self.test_unknown_field
+        )
+
+
+class YahooQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `YahooQuoteHistory`.`get_quote_fields` function.
 
     The `get_quote_fields` function should return a dictionary of
@@ -939,45 +976,7 @@ class GetYahooQuoteHistoryFieldsTestCase(unittest.TestCase):
         self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
 
 
-class YahooQuoteHistoryGetColumnFromFieldTestCase(TestCase):
-    """Test Case for the `YahooQuoteHistory`.`get_column_from_field` function.
-
-    The `get_column_from_field` function should return the column name if given
-    the output field name.  Basically works the reverse of `get_quote_fields`.
-
-    """
-    def setUp(self):
-        self.test_code = 'ABC'
-        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_columns = ['Date', 'Close', 'Adj_Close']
-        self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_columns, defer=True
-        )
-        # These are the field output names in the parsed quote
-        self.test_fields = ['Date', 'Close', 'Adj Close']
-
-        self.test_unknown_field = 'RandomField'
-
-    def test_get_column_from_field(self):
-        """get_column_from_field should return quote column name given the field output."""
-        [
-            self.assertEqual(
-                self.test_quote.get_column_from_field(self.test_fields[i]),
-                self.test_columns[i]
-            )
-            for i in range(len(self.test_columns))
-        ]
-
-    def test_get_column_from_field_not_found(self):
-        """get_column_from_field should raise Exception if the field is unknown."""
-        self.assertRaises(
-            Exception,
-            self.test_quote.get_column_from_field,
-            self.test_unknown_field
-        )
-
-
-class GetRawYahooQuoteHistoryTestCase(unittest.TestCase):
+class YahooQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
     """The `YahooQuoteHistory`.`get_raw_quote` function should query Yahoo's finance tables
     using YQL and return the historical quote data for a particular stock over
     a given date range.
@@ -1021,7 +1020,7 @@ class GetRawYahooQuoteHistoryTestCase(unittest.TestCase):
         self.assertEqual(raw_quote, self.test_raw_quote)
 
 
-class ParseYahooQuoteHistoryTestCase(unittest.TestCase):
+class YahooQuoteHistoryParseQuoteTestCase(unittest.TestCase):
     """The `YahooQuoteHistory`.`parse_quote` function should correctly parse the
     information from a Yahoo YQL stock history.
 
@@ -1180,38 +1179,45 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
-class GetRawYahooCSVQuoteHistoryTestCase(unittest.TestCase):
-    """The `YahooCSVQuoteHistory`.`get_raw_quote` function should query Yahoo's finance CSV
-    API and return the historical quote data for a particular stock over a given
-    date range.
+class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(TestCase):
+    """Test Case for the `YahooCSVQuoteHistory`.`get_column_from_field` function.
 
-    The date range must be a list containing the start and end dates.  The dates
-    may be date objects (fully specified), strings or empty.  If the start date
-    is empty a reasonable default is used.  If the end date is empty the latest
-    date is used.
+    The `get_column_from_field` function should return the column name if given
+    the output field name.  Basically works the reverse of `get_quote_fields`.
 
     """
     def setUp(self):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
-        self.test_raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
-            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
-            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
-            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
-
+        self.test_columns = ['Date', 'Close', 'Adj Close']
         self.test_quote = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, defer=True
+            self.test_code, self.test_dates, self.test_columns, defer=True
+        )
+        # These are the field output names in the parsed quote
+        self.test_fields = ['Date', 'Close', 'Adj Close']
+
+        self.test_unknown_field = 'RandomField'
+
+    def test_get_column_from_field(self):
+        """get_column_from_field should return quote column name given the field output."""
+        [
+            self.assertEqual(
+                self.test_quote.get_column_from_field(self.test_fields[i]),
+                self.test_columns[i]
+            )
+            for i in range(len(self.test_columns))
+        ]
+
+    def test_get_column_from_field_not_found(self):
+        """get_column_from_field should raise Exception if the field is unknown."""
+        self.assertRaises(
+            Exception,
+            self.test_quote.get_column_from_field,
+            self.test_unknown_field
         )
 
-    def test_history_good_code(self):
-        """get_raw_quote should return True given a valid code."""
-        raw_quote = self.test_quote.get_raw_quote()
 
-        self.assertEqual(raw_quote, self.test_raw_quote)
-
-
-class GetYahooCSVQuoteHistoryFieldsTestCase(unittest.TestCase):
+class YahooCSVQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
     """Test Case for the `get_quote_fields` function.
 
     The `get_quote_fields` function should return a dictionary of
@@ -1255,45 +1261,38 @@ class GetYahooCSVQuoteHistoryFieldsTestCase(unittest.TestCase):
         self.assertRaises(Exception, self.test_quote_unknown_fields.get_quote_fields)
 
 
-class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(TestCase):
-    """Test Case for the `YahooCSVQuoteHistory`.`get_column_from_field` function.
+class YahooCSVQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
+    """The `YahooCSVQuoteHistory`.`get_raw_quote` function should query Yahoo's finance CSV
+    API and return the historical quote data for a particular stock over a given
+    date range.
 
-    The `get_column_from_field` function should return the column name if given
-    the output field name.  Basically works the reverse of `get_quote_fields`.
+    The date range must be a list containing the start and end dates.  The dates
+    may be date objects (fully specified), strings or empty.  If the start date
+    is empty a reasonable default is used.  If the end date is empty the latest
+    date is used.
 
     """
     def setUp(self):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_columns = ['Date', 'Close', 'Adj Close']
+        self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
+        self.test_raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
+            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
+            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
+            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
+
         self.test_quote = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, self.test_columns, defer=True
-        )
-        # These are the field output names in the parsed quote
-        self.test_fields = ['Date', 'Close', 'Adj Close']
-
-        self.test_unknown_field = 'RandomField'
-
-    def test_get_column_from_field(self):
-        """get_column_from_field should return quote column name given the field output."""
-        [
-            self.assertEqual(
-                self.test_quote.get_column_from_field(self.test_fields[i]),
-                self.test_columns[i]
-            )
-            for i in range(len(self.test_columns))
-        ]
-
-    def test_get_column_from_field_not_found(self):
-        """get_column_from_field should raise Exception if the field is unknown."""
-        self.assertRaises(
-            Exception,
-            self.test_quote.get_column_from_field,
-            self.test_unknown_field
+            self.test_code, self.test_dates, defer=True
         )
 
+    def test_history_good_code(self):
+        """get_raw_quote should return True given a valid code."""
+        raw_quote = self.test_quote.get_raw_quote()
 
-class ParseYahooCSVQuoteHistoryTestCase(unittest.TestCase):
+        self.assertEqual(raw_quote, self.test_raw_quote)
+
+
+class YahooCSVQuoteHistoryParseQuoteTestCase(unittest.TestCase):
     """The `YahooCSVQuoteHistory`.`parse_quote` function should correctly parse the
     information from a Yahoo CSV stock history.
 
