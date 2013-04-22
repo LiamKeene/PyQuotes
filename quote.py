@@ -563,12 +563,21 @@ class YahooQuoteHistory(QuoteBase):
         y = yql.Public()
         env = 'http://www.datatables.org/alltables.env'
 
+        # Determine the query columns
+        if self.fields == '*':
+            columns = '*'
+        else:
+            columns = [self.get_column_from_field(field) for field in self.fields]
+
+        # Join as a comma separated string
+        columns = ','.join(columns)
+
         # Execute the query and get the response
-        query = 'select * from yahoo.finance.historicaldata ' \
+        query = 'select %(columns)s from yahoo.finance.historicaldata ' \
             'where symbol = "%(code)s.%(exchange)s" ' \
             'and startDate = "%(start_date)s" and endDate = "%(end_date)s"' \
             % {
-                'code': self.code, 'exchange': exchange,
+                'code': self.code, 'exchange': exchange, 'columns': columns,
                 'start_date': start_date, 'end_date': end_date,
             }
         response = y.execute(query, env=env)
@@ -589,7 +598,7 @@ class YahooQuoteHistory(QuoteBase):
         Given a dictionary containing the fields to include in the result.
 
         """
-        if self.fields == {} or self.fields is None:
+        if self.quote_fields == {} or self.quote_fields is None:
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
         output = []
@@ -602,13 +611,13 @@ class YahooQuoteHistory(QuoteBase):
 
             for key, value in data.items():
                 # Ignore fields in data that are not in requested field dict
-                if not self.fields.has_key(key):
+                if not self.quote_fields.has_key(key):
                     continue
                 # YQL historical quotes have superfluous 'date' field
                 if key == 'date':
                    continue
                 # Lookup data name and data type
-                data_name, data_type = self.fields[key]
+                data_name, data_type = self.quote_fields[key]
 
                 # Apply the datatype
                 dic[data_name] = data_type(value)
@@ -625,7 +634,7 @@ class YahooQuoteHistory(QuoteBase):
 
         """
         # Determine the field names and types
-        self.fields = self.get_quote_fields()
+        self.quote_fields = self.get_quote_fields()
 
         # Fetch the raw quote
         self.raw_quote = self.get_raw_quote()
@@ -768,7 +777,7 @@ class YahooCSVQuoteHistory(QuoteBase):
         Given a dictionary containing the fields to include in the result.
 
         """
-        if self.fields == {} or self.fields is None:
+        if self.quote_fields == {} or self.quote_fields is None:
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
         # Use the CSV module to parse the quote
@@ -794,12 +803,13 @@ class YahooCSVQuoteHistory(QuoteBase):
             dic = {}
 
             for j in range(len(headers)):
+
                 # Ignore fields in data that are not in requested field dict
-                if not self.fields.has_key(headers[j]):
+                if not self.quote_fields.has_key(headers[j]):
                     continue
 
                 # Lookup data name and data type
-                data_name, data_type = self.fields[headers[j]]
+                data_name, data_type = self.quote_fields[headers[j]]
 
                 # Apply the datatype
                 dic[data_name] = data_type(data[i][j])
@@ -815,9 +825,8 @@ class YahooCSVQuoteHistory(QuoteBase):
         Runs the get_quote_fields, get_raw_quote and parse_quote methods.
 
         """
-
         # Determine the field names and types
-        self.fields = self.get_quote_fields()
+        self.quote_fields = self.get_quote_fields()
 
         # Fetch the raw quote
         self.raw_quote = self.get_raw_quote()
