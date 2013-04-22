@@ -898,18 +898,16 @@ class YahooQuoteHistoryGetColumnFromFieldTestCase(TestCase):
     """Test Case for the `YahooQuoteHistory`.`get_column_from_field` function.
 
     The `get_column_from_field` function should return the column name if given
-    the output field name.  Basically works the reverse of `get_quote_fields`.
+    the output field name.  Basically works the reverse of `get_field_from_column`.
 
     """
     def setUp(self):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_columns = ['Date', 'Close', 'Adj_Close']
-        self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_columns, defer=True
-        )
-        # These are the field output names in the parsed quote
         self.test_fields = ['Date', 'Close', 'Adj Close']
+        self.test_quote = YahooQuoteHistory(
+            self.test_code, self.test_dates, self.test_fields, defer=True
+        )
 
         self.test_unknown_field = 'RandomField'
 
@@ -929,6 +927,43 @@ class YahooQuoteHistoryGetColumnFromFieldTestCase(TestCase):
             Exception,
             self.test_quote.get_column_from_field,
             self.test_unknown_field
+        )
+
+
+class YahooQuoteHistoryGetFieldFromColumnTestCase(TestCase):
+    """Test Case for the `YahooQuoteHistory`.`get_field_from_column` function.
+
+    The `get_field_from_column` function should return the column name if given
+    the output field name.  Basically works the reverse of `get_column_from_field`.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_fields = ['Date', 'Close', 'Adj Close']
+        self.test_columns = ['Date', 'Close', 'Adj_Close']
+        self.test_quote = YahooQuoteHistory(
+            self.test_code, self.test_dates, self.test_fields, defer=True
+        )
+
+        self.test_unknown_column = 'RandomColumn'
+
+    def test_get_field_from_column(self):
+        """get_field_from_column should return quote column name given the field output."""
+        [
+            self.assertEqual(
+                self.test_quote.get_field_from_column(self.test_columns[i]),
+                self.test_fields[i]
+            )
+            for i in range(len(self.test_columns))
+        ]
+
+    def test_get_field_from_column_not_found(self):
+        """get_field_from_column should raise Exception if the field is unknown."""
+        self.assertRaises(
+            Exception,
+            self.test_quote.get_field_from_column,
+            self.test_unknown_column
         )
 
 
@@ -1190,11 +1225,10 @@ class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(TestCase):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_columns = ['Date', 'Close', 'Adj Close']
-        self.test_quote = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, self.test_columns, defer=True
-        )
-        # These are the field output names in the parsed quote
         self.test_fields = ['Date', 'Close', 'Adj Close']
+        self.test_quote = YahooCSVQuoteHistory(
+            self.test_code, self.test_dates, self.test_fields, defer=True
+        )
 
         self.test_unknown_field = 'RandomField'
 
@@ -1214,6 +1248,43 @@ class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(TestCase):
             Exception,
             self.test_quote.get_column_from_field,
             self.test_unknown_field
+        )
+
+
+class YahooCSVQuoteHistoryGetFieldFromColumnTestCase(TestCase):
+    """Test Case for the `YahooQuoteHistory`.`get_field_from_column` function.
+
+    The `get_field_from_column` function should return the column name if given
+    the output field name.  Basically works the reverse of `get_column_from_field`.
+
+    """
+    def setUp(self):
+        self.test_code = 'ABC'
+        self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
+        self.test_columns = ['Date', 'Close', 'Adj_Close']
+        self.test_fields = ['Date', 'Close', 'Adj Close']
+        self.test_quote = YahooQuoteHistory(
+            self.test_code, self.test_dates, self.test_fields, defer=True
+        )
+
+        self.test_unknown_column = 'RandomColumn'
+
+    def test_get_field_from_column(self):
+        """get_field_from_column should return quote column name given the field output."""
+        [
+            self.assertEqual(
+                self.test_quote.get_field_from_column(self.test_columns[i]),
+                self.test_fields[i]
+            )
+            for i in range(len(self.test_columns))
+        ]
+
+    def test_get_field_from_column_not_found(self):
+        """get_get_field_from_column should raise Exception if the field is unknown."""
+        self.assertRaises(
+            Exception,
+            self.test_quote.get_field_from_column,
+            self.test_unknown_column
         )
 
 
