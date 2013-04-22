@@ -21,9 +21,47 @@ class QuoteBase(object):
         """Initialise the quote model with any required parameters."""
         raise NotImplementedError('This method must be defined by subclass.')
 
+    def get_column_from_field(self, field):
+        """Returns the quote query column name from the field name."""
+        for column_name, (field_name, field_type) in self._known_fields.items():
+            if field == field_name:
+                return column_name
+        raise Exception('Field - %s is not known or unhandled' % (field, ))
+
+    def get_field_from_column(self, column):
+        """Returns the field name from the quote query column name."""
+        for column_name, (field_name, field_type) in self._known_fields.items():
+            if column == column_name:
+                return field_name
+        raise Exception('Column: %s is not known or unhandled' % (column, ))
+
     def get_quote_fields(self):
-        """Method to get the field names and data types for this quote."""
-        raise NotImplementedError('This method must be defined by subclass.')
+        """Returns dictionary of field names and types from given quote column names.
+
+        Each field needs it's name and type defined otherwise an Exception is
+        raised.
+
+        """
+        # If after all fields, just return the ones we have defined
+        if self.fields == '*':
+            return self._known_fields
+
+        output = {}
+
+        # Determine the query columns
+        columns = [self.get_column_from_field(field) for field in self.fields]
+
+        for column in columns:
+            if not self._known_fields.has_key(column):
+                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
+
+            # Find field in our known fields
+            data_name, data_type = self._known_fields[column]
+
+            # Add the field name and type to the output
+            output[column] = (data_name, data_type)
+
+        return output
 
     def get_raw_quote(self):
         """Method to fetch a raw unparsed quote from a provider."""
@@ -34,8 +72,19 @@ class QuoteBase(object):
         raise NotImplementedError('This method must be defined by subclass.')
 
     def process_quote(self):
-        """Method to fetch and parse a raw quote."""
-        raise NotImplementedError('This method must be defined by subclass.')
+        """Helper method to process a quote.
+
+        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
+
+        """
+        # Determine the field names and types
+        self.quote_fields = self.get_quote_fields()
+
+        # Fetch the raw quote
+        self.raw_quote = self.get_raw_quote()
+
+        # Parse the raw quote with the field names and types
+        self.quote = self.parse_quote()
 
 
 class LatestQuoteBase(QuoteBase):
@@ -91,63 +140,6 @@ class LatestQuoteBase(QuoteBase):
     def volume(self):
         """Returns the volume traded."""
         return self._get_quote_data('Volume')
-
-    def get_column_from_field(self, field):
-        """Returns the quote query column name from the field name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if field == field_name:
-                return column_name
-        raise Exception('Field - %s is not known or unhandled' % (field, ))
-
-    def get_field_from_column(self, column):
-        """Returns the field name from the quote query column name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if column == column_name:
-                return field_name
-        raise Exception('Column: %s is not known or unhandled' % (column, ))
-
-    def get_quote_fields(self):
-        """Returns dictionary of field names and types from given quote column names.
-
-        Each field needs it's name and type defined otherwise an Exception is
-        raised.
-
-        """
-        # If after all fields, just return the ones we have defined
-        if self.fields == '*':
-            return self._known_fields
-
-        output = {}
-
-        # Determine the query columns
-        columns = [self.get_column_from_field(field) for field in self.fields]
-
-        for column in columns:
-            if not self._known_fields.has_key(column):
-                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
-
-            # Find field in our known fields
-            data_name, data_type = self._known_fields[column]
-
-            # Add the field name and type to the output
-            output[column] = (data_name, data_type)
-
-        return output
-
-    def process_quote(self):
-        """Helper method to process a quote.
-
-        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
-
-        """
-        # Determine the field names and types
-        self.quote_fields = self.get_quote_fields()
-
-        # Fetch the raw quote
-        self.raw_quote = self.get_raw_quote()
-
-        # Parse the raw quote with the field names and types
-        self.quote = self.parse_quote()
 
 
 class YahooQuote(QuoteBase):
@@ -497,48 +489,6 @@ class YahooQuoteHistory(QuoteBase):
             'Adj_Close': ('Adj Close', Decimal),
         }
 
-    def get_column_from_field(self, field):
-        """Returns the quote query column name from the field name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if field == field_name:
-                return column_name
-        raise Exception('Field - %s is not known or unhandled' % (field, ))
-
-    def get_field_from_column(self, column):
-        """Returns the field name from the quote query column name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if column == column_name:
-                return field_name
-        raise Exception('Column: %s is not known or unhandled' % (column, ))
-
-    def get_quote_fields(self):
-        """Returns field names and types from given Yahoo YQL field names.
-
-        Each field needs it's name and type defined otherwise an Exception is
-        raised.
-
-        """
-        # If after all fields, just return the ones we have defined
-        if self.fields == '*':
-            return self._known_fields
-
-        output = {}
-
-        # Determine the query columns
-        columns = [self.get_column_from_field(field) for field in self.fields]
-
-        for column in columns:
-            if not self._known_fields.has_key(column):
-                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
-
-            # Find field in our known fields
-            data_name, data_type = self._known_fields[column]
-
-            # Add the field name and type to the output
-            output[column] = (data_name, data_type)
-
-        return output
-
     def get_raw_quote(self):
         """Get a list of quotes from the Yahoo YQL finance tables and return the result.
 
@@ -627,21 +577,6 @@ class YahooQuoteHistory(QuoteBase):
 
         return output
 
-    def process_quote(self):
-        """Helper method to process a quote.
-
-        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
-
-        """
-        # Determine the field names and types
-        self.quote_fields = self.get_quote_fields()
-
-        # Fetch the raw quote
-        self.raw_quote = self.get_raw_quote()
-
-        # Parse the raw quote with the field names and types
-        self.quote = self.parse_quote()
-
 
 class YahooCSVQuoteHistory(QuoteBase):
     """Represents a set of historical quotes that are obtained via the Yahoo
@@ -687,48 +622,6 @@ class YahooCSVQuoteHistory(QuoteBase):
             'Volume': ('Volume', Decimal),
             'Adj Close': ('Adj Close', Decimal),
         }
-
-    def get_column_from_field(self, field):
-        """Returns the quote query column name from the field name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if field == field_name:
-                return column_name
-        raise Exception('Field - %s is not known or unhandled' % (field, ))
-
-    def get_field_from_column(self, column):
-        """Returns the field name from the quote query column name."""
-        for column_name, (field_name, field_type) in self._known_fields.items():
-            if column == column_name:
-                return field_name
-        raise Exception('Column: %s is not known or unhandled' % (column, ))
-
-    def get_quote_fields(self):
-        """Returns field names and types from given Yahoo YQL field names.
-
-        Each field needs it's name and type defined otherwise an Exception is
-        raised.
-
-        """
-        # If after all fields, just return the ones we have defined
-        if self.fields== '*':
-            return self._known_fields
-
-        output = {}
-
-        # Determine the query columns
-        columns = [self.get_column_from_field(field) for field in self.fields]
-
-        for column in columns:
-            if not self._known_fields.has_key(column):
-                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
-
-            # Find field in our known fields
-            data_name, data_type = self._known_fields[column]
-
-            # Add the field name and type to the output
-            output[column] = (data_name, data_type)
-
-        return output
 
     def get_raw_quote(self):
         """Get a list of quotes from the Yahoo Finanace CSV API and return the result.
@@ -818,18 +711,3 @@ class YahooCSVQuoteHistory(QuoteBase):
             output.append(dic)
 
         return output
-
-    def process_quote(self):
-        """Helper method to process a quote.
-
-        Runs the get_quote_fields, get_raw_quote and parse_quote methods.
-
-        """
-        # Determine the field names and types
-        self.quote_fields = self.get_quote_fields()
-
-        # Fetch the raw quote
-        self.raw_quote = self.get_raw_quote()
-
-        # Parse the raw quote with the field names and types
-        self.quote = self.parse_quote()
