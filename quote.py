@@ -645,39 +645,33 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
         if self.quote_fields == {} or self.quote_fields is None:
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
-        # Use the CSV module to parse the quote
-        reader = csv.reader(self.raw_quote.split('\n'))
+        # Use the CSV module to parse the quote (we need to split on new lines)
+        # Don't specify any columns (they will be taken as the first row of data)
+        reader = csv.DictReader(self.raw_quote.split('\n'))
 
         # Read the raw data
         raw_data = [row for row in reader]
 
-        # Remove any empty rows
-        raw_data.remove([])
-
-        # Remove the headers
-        headers = raw_data.pop(0)
-
-        # Trade data is the remaining CSV data
-        data = raw_data
-
         output = []
 
         # Populate the output list with data dictionaries
-        for i in range(len(data)):
+        for data in raw_data:
+
             # Create dictionary for this data
             dic = {}
 
-            for j in range(len(headers)):
-
+            for key, value in data.items():
                 # Ignore fields in data that are not in requested field dict
-                if not self.quote_fields.has_key(headers[j]):
+                if not self.quote_fields.has_key(key):
                     continue
-
+                # YQL historical quotes have superfluous 'date' field
+                if key == 'date':
+                   continue
                 # Lookup data name and data type
-                data_name, data_type = self.quote_fields[headers[j]]
+                data_name, data_type = self.quote_fields[key]
 
                 # Apply the datatype
-                dic[data_name] = data_type(data[i][j])
+                dic[data_name] = data_type(value)
 
             # Add the data dictionary to the output
             output.append(dic)
