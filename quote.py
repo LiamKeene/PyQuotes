@@ -557,9 +557,6 @@ class YahooQuoteHistory(HistoryQuoteBase):
                 # Ignore fields in data that are not in requested field dict
                 if not self.quote_fields.has_key(key):
                     continue
-                # YQL historical quotes have superfluous 'date' field
-                if key == 'date':
-                   continue
                 # Lookup data name and data type
                 data_name, data_type = self.quote_fields[key]
 
@@ -664,9 +661,6 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
                 # Ignore fields in data that are not in requested field dict
                 if not self.quote_fields.has_key(key):
                     continue
-                # YQL historical quotes have superfluous 'date' field
-                if key == 'date':
-                   continue
                 # Lookup data name and data type
                 data_name, data_type = self.quote_fields[key]
 
