@@ -17,9 +17,26 @@ class QuoteBase(object):
     different models.
 
     """
-    def __init__(self):
-        """Initialise the quote model with any required parameters."""
-        raise NotImplementedError('This method must be defined by subclass.')
+    def __init__(self, code, fields='*', defer=False):
+        """Initialise the quote model given the stock code.
+
+        Optionally given a list of field names that contain the required data
+        in the quote (default is all fields '*'), and a boolean to determine
+        whether to process the quote now or at a later time (default is False).
+
+        """
+        # Store the stock code and columns of data to fetch
+        self.code = code
+        self.fields = fields
+
+        # Default value of quote
+        self.quote_fields = {}
+        self.raw_quote = None
+        self.quote = None
+
+        # Process quote or defer it for later
+        if not defer:
+            self.process_quote()
 
     def get_column_from_field(self, field):
         """Returns the quote query column name from the field name."""
@@ -92,27 +109,6 @@ class LatestQuoteBase(QuoteBase):
     for quote models that retrieve the latest quote.
 
     """
-    def __init__(self, code, fields='*', defer=False):
-        """Initialise the quote model given the stock code.
-
-        Optionally given a list of field names that contain the required data
-        in the quote (default is all fields '*'), and a boolean to determine
-        whether to process the quote now or at a later time (default is False).
-
-        """
-        # Store the stock code and columns of data to fetch
-        self.code = code
-        self.fields = fields
-
-        # Default value of quote
-        self.quote_fields = {}
-        self.raw_quote = None
-        self.quote = None
-
-        # Process quote or defer it for later
-        if not defer:
-            self.process_quote()
-
     def _get_quote_data(self, field):
         """Returns the desired quote field."""
         if self.quote is None:
@@ -444,9 +440,9 @@ class YahooCSVQuote(QuoteBase):
         return tuple(output)
 
 
-class YahooQuoteHistory(QuoteBase):
-    """Represents a set of historical quotes that are obtained via the Yahoo
-    Finance community table using the YQL library.
+class HistoryQuoteBase(QuoteBase):
+    """Abstract quote model that expands on the QuoteBase and defines methods
+    for quote models that retrieve historical quotes.
 
     """
     def __init__(self, code, date_range, fields='*', defer=False):
@@ -457,20 +453,18 @@ class YahooQuoteHistory(QuoteBase):
         whether to process the quote now or at a later time (default is False).
 
         """
-        # Store the stock code and columns of data to fetch
-        self.code = code
+        # Store the date range
         self.date_range = date_range
-        self.fields = fields
 
-        # Default value of quote
-        self.quote_fields = {}
-        self.raw_quote = None
-        self.quote = None
+        # Initialise the superclass
+        super(HistoryQuoteBase, self).__init__(code, fields=fields, defer=defer)
 
-        # Process quote or defer it for later
-        if not defer:
-            self.process_quote()
 
+class YahooQuoteHistory(HistoryQuoteBase):
+    """Represents a set of historical quotes that are obtained via the Yahoo
+    Finance community table using the YQL library.
+
+    """
     @property
     def _known_fields(self):
         """Returns the known fields of this quote model.
@@ -578,33 +572,11 @@ class YahooQuoteHistory(QuoteBase):
         return output
 
 
-class YahooCSVQuoteHistory(QuoteBase):
+class YahooCSVQuoteHistory(HistoryQuoteBase):
     """Represents a set of historical quotes that are obtained via the Yahoo
     CSV API.
 
     """
-    def __init__(self, code, date_range, fields='*', defer=False):
-        """Initialise the quote model given the stock code and date range.
-
-        Optionally given a list of field names that contain the required data
-        in the quote (default is all fields '*'), and a boolean to determine
-        whether to process the quote now or at a later time (default is False).
-
-        """
-        # Store the stock code and columns of data to fetch
-        self.code = code
-        self.date_range = date_range
-        self.fields = fields
-
-        # Default value of quote
-        self.quote_fields = {}
-        self.raw_quote = None
-        self.quote = None
-
-        # Process quote or defer it for later
-        if not defer:
-            self.process_quote()
-
     @property
     def _known_fields(self):
         """Returns the known fields of this quote model.
