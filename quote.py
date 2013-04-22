@@ -457,20 +457,21 @@ class YahooQuoteHistory(QuoteBase):
     Finance community table using the YQL library.
 
     """
-    def __init__(self, code, date_range, columns='*', defer=False):
-        """Initialise a YahooQuoteHistory given the stock code and date range.
+    def __init__(self, code, date_range, fields='*', defer=False):
+        """Initialise the quote model given the stock code and date range.
 
-        Optionally give a list of columns to include in the YQL query (default is
-        all columns `*`).
+        Optionally given a list of field names that contain the required data
+        in the quote (default is all fields '*'), and a boolean to determine
+        whether to process the quote now or at a later time (default is False).
 
         """
         # Store the stock code and columns of data to fetch
         self.code = code
         self.date_range = date_range
-        self.columns = columns
+        self.fields = fields
 
         # Default value of quote
-        self.fields = {}
+        self.quote_fields = {}
         self.raw_quote = None
         self.quote = None
 
@@ -518,20 +519,23 @@ class YahooQuoteHistory(QuoteBase):
 
         """
         # If after all fields, just return the ones we have defined
-        if self.columns == '*':
+        if self.fields == '*':
             return self._known_fields
 
         output = {}
 
-        for field in self.columns:
-            if not self._known_fields.has_key(field):
-                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+        # Determine the query columns
+        columns = [self.get_column_from_field(field) for field in self.fields]
+
+        for column in columns:
+            if not self._known_fields.has_key(column):
+                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
 
             # Find field in our known fields
-            data_name, data_type = self._known_fields[field]
+            data_name, data_type = self._known_fields[column]
 
             # Add the field name and type to the output
-            output[field] = (data_name, data_type)
+            output[column] = (data_name, data_type)
 
         return output
 
@@ -635,20 +639,21 @@ class YahooCSVQuoteHistory(QuoteBase):
     CSV API.
 
     """
-    def __init__(self, code, date_range, columns='*', defer=False):
-        """Initialise a YahooQuoteHistory given the stock code and date range.
+    def __init__(self, code, date_range, fields='*', defer=False):
+        """Initialise the quote model given the stock code and date range.
 
-        Optionally give a list of columns to include in the YQL query (default is
-        all columns `*`).
+        Optionally given a list of field names that contain the required data
+        in the quote (default is all fields '*'), and a boolean to determine
+        whether to process the quote now or at a later time (default is False).
 
         """
         # Store the stock code and columns of data to fetch
         self.code = code
         self.date_range = date_range
-        self.columns = columns
+        self.fields = fields
 
         # Default value of quote
-        self.fields = {}
+        self.quote_fields = {}
         self.raw_quote = None
         self.quote = None
 
@@ -696,20 +701,23 @@ class YahooCSVQuoteHistory(QuoteBase):
 
         """
         # If after all fields, just return the ones we have defined
-        if self.columns== '*':
+        if self.fields== '*':
             return self._known_fields
 
         output = {}
 
-        for field in self.columns:
-            if not self._known_fields.has_key(field):
-                raise NotImplementedError('Field: %s is not known or unhandled' % (field, ))
+        # Determine the query columns
+        columns = [self.get_column_from_field(field) for field in self.fields]
+
+        for column in columns:
+            if not self._known_fields.has_key(column):
+                raise NotImplementedError('Column - %s is not known or unhandled' % (column, ))
 
             # Find field in our known fields
-            data_name, data_type = self._known_fields[field]
+            data_name, data_type = self._known_fields[column]
 
             # Add the field name and type to the output
-            output[field] = (data_name, data_type)
+            output[column] = (data_name, data_type)
 
         return output
 

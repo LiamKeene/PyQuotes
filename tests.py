@@ -978,11 +978,11 @@ class YahooQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
     def setUp(self):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_columns = ['Date', 'High', 'Low', 'Close', 'Volume']
+        self.test_fields = ['Date', 'High', 'Low', 'Close', 'Volume']
         self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_columns, defer=True
+            self.test_code, self.test_dates, self.test_fields, defer=True
         )
-        self.test_fields = {
+        self.test_quote_fields = {
             'Date': ('Date', parse_date), 'High': ('High', Decimal),
             'Low': ('Low', Decimal), 'Close': ('Close', Decimal),
             'Volume': ('Volume', Decimal),
@@ -990,7 +990,7 @@ class YahooQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
 
         self.test_get_all_fields = '*'
         self.test_quote_all_fields = YahooQuoteHistory(
-            self.test_code, self.test_dates, defer=True
+            self.test_code, self.test_dates, self.test_get_all_fields, defer=True
         )
 
         self.test_unknown_fields = ['RandomField', ]
@@ -1000,7 +1000,7 @@ class YahooQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
 
     def test_get_quote_fields(self):
         """get_quote_fields should return dictionary of tuples of field names."""
-        self.assertEqual(self.test_quote.get_quote_fields(), self.test_fields)
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
 
     def test_get_all_fields(self):
         """get_quote_fields should return dictionary of tuples of all field names."""
@@ -1299,11 +1299,11 @@ class YahooCSVQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
     def setUp(self):
         self.test_code = 'ABC'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
-        self.test_columns = ['Date', 'High', 'Low', 'Close', 'Volume']
+        self.test_fields = ['Date', 'High', 'Low', 'Close', 'Volume']
         self.test_quote = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, self.test_columns, defer=True
+            self.test_code, self.test_dates, self.test_fields, defer=True
         )
-        self.test_fields = {
+        self.test_quote_fields = {
             'Date': ('Date', parse_date), 'High': ('High', Decimal),
             'Low': ('Low', Decimal), 'Close': ('Close', Decimal),
             'Volume': ('Volume', Decimal),
@@ -1311,7 +1311,7 @@ class YahooCSVQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
 
         self.test_get_all_fields = '*'
         self.test_quote_all_fields = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, defer=True
+            self.test_code, self.test_dates, self.test_get_all_fields, defer=True
         )
 
         self.test_unknown_fields = ['RandomField', ]
@@ -1321,7 +1321,7 @@ class YahooCSVQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
 
     def test_get_quote_fields(self):
         """get_quote_fields should return dictionary of tuples of field names."""
-        self.assertEqual(self.test_quote.get_quote_fields(), self.test_fields)
+        self.assertEqual(self.test_quote.get_quote_fields(), self.test_quote_fields)
 
     def test_get_all_fields(self):
         """get_quote_fields should return dictionary of tuples of all field names."""
