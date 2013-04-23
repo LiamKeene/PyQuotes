@@ -64,7 +64,9 @@ quote should be mapped to the ```Close``` field in the output and converted to
 a ```Decimal```and so on.  Other quote classes contain similar dictionaries.
 
 When a quote is created and columns to query are not specified the quote will
-only parse columns that are defined in ```known_fields```.
+only parse columns that are defined in ```known_fields```.  If a column to query
+is specified in the quote constructor, but it has not been defined in
+```known_fields``` an Exception will be raised.
 
 ## Author
 **Liam Keene**

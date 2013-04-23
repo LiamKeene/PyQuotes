@@ -137,8 +137,26 @@ class LatestQuoteBase(QuoteBase):
         """Returns the volume traded."""
         return self._get_quote_data('Volume')
 
+    def parse_quote(self):
+        """Parse the raw data from a quote into a dictionary of useful data.
 
-class YahooQuote(QuoteBase):
+        """
+        if self.quote_fields == {} or self.quote_fields is None:
+            raise Exception('Quote cannot be parsed without output field tuple.')
+
+        output = {}
+
+        for key, value in self.raw_quote.items():
+            # Ignore fields in the raw quote that were not requested
+            if not self.quote_fields.has_key(key):
+                continue
+            field_name, field_type = self.quote_fields[key]
+            output[field_name] = field_type(value)
+
+        return output
+
+
+class YahooQuote(LatestQuoteBase):
     """Represents a quote that is obtained via the Yahoo Finance community table
     using the YQL library.
 
@@ -251,29 +269,8 @@ class YahooQuote(QuoteBase):
         """
         return datetime.strptime(value, '%I:%M%p').time()
 
-    def parse_quote(self):
-        """Parse the raw data from a Yahoo finance YQL quote into a dictionary of
-        useful data.
 
-        Given a dictionary containing the fields to include in the result.
-
-        """
-        if self.quote_fields == {} or self.quote_fields is None:
-            raise Exception('Quote cannot be parsed without output field dictionary.')
-
-        output = {}
-
-        for key, value in self.raw_quote.items():
-            # Ignore fields in data that are not in requested field dict
-            if not self.quote_fields.has_key(key):
-                continue
-            field_name, field_type = self.quote_fields[key]
-            output[field_name] = field_type(value)
-
-        return output
-
-
-class YahooCSVQuote(QuoteBase):
+class YahooCSVQuote(LatestQuoteBase):
     """Represents a quote that is obtained via the Yahoo CSV API.
 
     """
@@ -388,27 +385,6 @@ class YahooCSVQuote(QuoteBase):
         """
         return datetime.strptime(value, '%I:%M%p').time()
 
-    def parse_quote(self):
-        """Parse the raw data from a Yahoo finance CSV quote into a dictionary of
-        useful data.
-
-        Given a dictionary containing the fields to include in the result.
-
-        """
-        if self.quote_fields == {} or self.quote_fields is None:
-            raise Exception('Quote cannot be parsed without output field tuple.')
-
-        output = {}
-
-        for key, value in self.raw_quote.items():
-            # Ignore fields in data that are not in requested field dict
-            if not self.quote_fields.has_key(key):
-                continue
-            field_name, field_type = self.quote_fields[key]
-            output[field_name] = field_type(value)
-
-        return output
-
     def parse_symbols(self, symbol_str):
         """Parse a string of Yahoo CSV symbols and return them as a tuple.
 
@@ -455,6 +431,36 @@ class HistoryQuoteBase(QuoteBase):
 
         # Initialise the superclass
         super(HistoryQuoteBase, self).__init__(code, fields=fields, defer=defer)
+
+    def parse_quote(self):
+        """Parse the raw data from a historical quote into a dictionary of useful data.
+
+        """
+        if self.quote_fields == {} or self.quote_fields is None:
+            raise Exception('Quote cannot be parsed without output field dictionary.')
+
+        output = []
+
+        # Populate the output list with data dictionaries
+        for data in self.raw_quote:
+
+            # Create dictionary for this data
+            dic = {}
+
+            for key, value in data.items():
+                # Ignore fields in data that are not in requested field dict
+                if not self.quote_fields.has_key(key):
+                    continue
+                # Lookup data name and data type
+                data_name, data_type = self.quote_fields[key]
+
+                # Apply the datatype
+                dic[data_name] = data_type(value)
+
+            # Add the data dictionary to the output
+            output.append(dic)
+
+        return output
 
 
 class YahooQuoteHistory(HistoryQuoteBase):
@@ -532,39 +538,6 @@ class YahooQuoteHistory(HistoryQuoteBase):
 
         return quote
 
-    def parse_quote(self):
-        """Parse the raw data from a Yahoo finance YQL historical quote into a
-        dictionary of useful data.
-
-        Given a dictionary containing the fields to include in the result.
-
-        """
-        if self.quote_fields == {} or self.quote_fields is None:
-            raise Exception('Quote cannot be parsed without output field dictionary.')
-
-        output = []
-
-        # Populate the output list with data dictionaries
-        for data in self.raw_quote:
-
-            # Create dictionary for this data
-            dic = {}
-
-            for key, value in data.items():
-                # Ignore fields in data that are not in requested field dict
-                if not self.quote_fields.has_key(key):
-                    continue
-                # Lookup data name and data type
-                data_name, data_type = self.quote_fields[key]
-
-                # Apply the datatype
-                dic[data_name] = data_type(value)
-
-            # Add the data dictionary to the output
-            output.append(dic)
-
-        return output
-
 
 class YahooCSVQuoteHistory(HistoryQuoteBase):
     """Represents a set of historical quotes that are obtained via the Yahoo
@@ -635,37 +608,3 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
         quote = [row for row in reader]
 
         return quote
-
-    def parse_quote(self):
-        """Parse the raw data from a Yahoo finance CSV historical quote into a
-        dictionary of useful data.
-
-        Given a dictionary containing the fields to include in the result.
-
-        """
-        if self.quote_fields == {} or self.quote_fields is None:
-            raise Exception('Quote cannot be parsed without output field dictionary.')
-
-        output = []
-
-        # Populate the output list with data dictionaries
-        for data in self.raw_quote:
-
-            # Create dictionary for this data
-            dic = {}
-
-            for key, value in data.items():
-                # Ignore fields in data that are not in requested field dict
-                if not self.quote_fields.has_key(key):
-                    continue
-                # Lookup data name and data type
-                data_name, data_type = self.quote_fields[key]
-
-                # Apply the datatype
-                dic[data_name] = data_type(value)
-
-            # Add the data dictionary to the output
-            output.append(dic)
-
-        return output
-
