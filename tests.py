@@ -417,7 +417,9 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
         self.test_fields = ['Name', 'Code', 'Exchange', ]
 
         # Expected raw quote
-        self.test_raw_quote = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
+        self.test_raw_quote = {
+            'n': 'ADEL BRTN FPO', 's': 'ABC.AX', 'x': 'ASX'
+        }
 
         # Expected parsed quote
         self.test_parsed_quote = {
@@ -473,7 +475,9 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
             't1': ('Time', self.test_quote.parse_time),
         }
 
-        self.test_quote.raw_quote = '"ABCAX",3.320,"4/10/2013","10:21pm"\r\n'
+        self.test_quote.raw_quote = {
+            's':  'ABC.AX', 'l1': '3.320', 'd1': '4/10/2013', 't1': '10:21pm'
+        }
 
     def test_quote_price(self):
         """Test the quote.price is correct after a quote is parsed."""
@@ -645,7 +649,9 @@ class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
         self.fields = ['Name', 'Code', 'Exchange', ]
 
         # Expected raw quote
-        self.test_raw_quote = '"ADEL BRTN FPO","ABC.AX","ASX"\r\n'
+        self.test_raw_quote = {
+            'n': 'ADEL BRTN FPO', 's': 'ABC.AX', 'x': 'ASX'
+        }
 
         self.test_good_quote = YahooCSVQuote(self.good_code, defer=True)
 
@@ -743,7 +749,9 @@ class YahooCSVQuoteParseQuoteTestCase(unittest.TestCase):
 
         # Explicitly set the quote fields and raw quote
         self.test_quote.quote_fields = self.test_quote_fields
-        self.test_quote.raw_quote = '"ABC.AX",3.330,1351200\r\n'
+        self.test_quote.raw_quote = {
+            's': 'ABC.AX', 'l1': '3.330', 'v': '1351200'
+        }
 
         # The parsed quote
         self.test_parsed_quote = {
