@@ -1186,10 +1186,21 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'Close', 'Volume']
-        self.test_raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
-            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
-            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
-            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
+        self.test_raw_quote = [
+            {
+                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38', 'Low': '3.31',
+                'Close': '3.33', 'Volume': '1351200', 'Adj Close': '3.33'
+            },
+            {
+                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41', 'Low': '3.33',
+                'Close': '3.34', 'Volume': '1225300', 'Adj Close': '3.34'
+            },
+            {
+                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41', 'Low': '3.38',
+                'Close': '3.40', 'Volume': '2076700', 'Adj Close': '3.40'
+            }
+        ]
+
         self.test_parsed_quote = [
             {
                 'Date': date(2013, 4, 12), 'Close': Decimal('3.33'),
@@ -1370,10 +1381,20 @@ class YahooCSVQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
 
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10']
 
-        self.test_raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
-            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
-            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
-            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
+        self.test_raw_quote = [
+            {
+                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38', 'Low': '3.31',
+                'Close': '3.33', 'Volume': '1351200', 'Adj Close': '3.33'
+            },
+            {
+                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41', 'Low': '3.33',
+                'Close': '3.34', 'Volume': '1225300', 'Adj Close': '3.34'
+            },
+            {
+                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41', 'Low': '3.38',
+                'Close': '3.40', 'Volume': '2076700', 'Adj Close': '3.40'
+            }
+        ]
 
         self.test_good_quote = YahooCSVQuoteHistory(
             self.good_code, self.test_dates, defer=True
@@ -1420,10 +1441,20 @@ class YahooCSVQuoteHistoryParseQuoteTestCase(unittest.TestCase):
             'High': ('High', Decimal), 'Low': ('Low', Decimal),
             'Close': ('Close', Decimal), 'Volume': ('Volume', Decimal),
         }
-        self.test_quote.raw_quote = 'Date,Open,High,Low,Close,Volume,Adj Close\n' \
-            '2013-04-12,3.36,3.38,3.31,3.33,1351200,3.33\n' \
-            '2013-04-11,3.39,3.41,3.33,3.34,1225300,3.34\n' \
-            '2013-04-10,3.39,3.41,3.38,3.40,2076700,3.40\n'
+        self.test_quote.raw_quote = [
+            {
+                'Date': '2013-04-12', 'Open': '3.36', 'High': '3.38', 'Low': '3.31',
+                'Close': '3.33', 'Volume': '1351200', 'Adj Close': '3.33'
+            },
+            {
+                'Date': '2013-04-11', 'Open': '3.39', 'High': '3.41', 'Low': '3.33',
+                'Close': '3.34', 'Volume': '1225300', 'Adj Close': '3.34'
+            },
+            {
+                'Date': '2013-04-10', 'Open': '3.39', 'High': '3.41', 'Low': '3.38',
+                'Close': '3.40', 'Volume': '2076700', 'Adj Close': '3.40'
+            }
+        ]
 
         # The parsed quote
         self.test_parsed_quote = [

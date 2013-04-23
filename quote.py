@@ -627,6 +627,13 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
 
         quote = response.read()
 
+        # Use the CSV module to parse the quote (we need to split on new lines)
+        # Don't specify any columns (they will be taken as the first row of data)
+        reader = csv.DictReader(quote.split('\n'))
+
+        # Read the raw data
+        quote = [row for row in reader]
+
         return quote
 
     def parse_quote(self):
@@ -639,17 +646,10 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
         if self.quote_fields == {} or self.quote_fields is None:
             raise Exception('Quote cannot be parsed without output field dictionary.')
 
-        # Use the CSV module to parse the quote (we need to split on new lines)
-        # Don't specify any columns (they will be taken as the first row of data)
-        reader = csv.DictReader(self.raw_quote.split('\n'))
-
-        # Read the raw data
-        raw_data = [row for row in reader]
-
         output = []
 
         # Populate the output list with data dictionaries
-        for data in raw_data:
+        for data in self.raw_quote:
 
             # Create dictionary for this data
             dic = {}
@@ -668,3 +668,4 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
             output.append(dic)
 
         return output
+
