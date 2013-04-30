@@ -189,11 +189,9 @@ class YahooQuoteDateTimeParseMixin():
 
         datetime_obj = datetime.strptime(date_time_str, date_time_fmt)
 
-        date_obj = datetime_obj.date()
-
         # Create the timezone used in the quote
         yql_timezone = pytz.timezone('US/Eastern')
-        yql_datetime = yql_timezone.localize(datetime_obj, is_dst=True)
+        yql_datetime = yql_timezone.localize(datetime_obj)
 
         # Convert the datetime into the desired timezone
         req_timezone = pytz.timezone(TIME_ZONE)
