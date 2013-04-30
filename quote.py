@@ -305,9 +305,6 @@ class YahooCSVQuote(LatestQuoteBase, YahooQuoteDateTimeParseMixin):
         to types of data to get in the quote.
 
         """
-        if not len(self.code) == 3:
-            raise Exception('Stock code appears incorrect')
-
         # Determine the query columns
         if self.fields == '*':
             columns = self._known_fields.keys()

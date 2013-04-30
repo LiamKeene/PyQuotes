@@ -250,8 +250,7 @@ class YahooQuoteGetRawQuoteTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-        self.bad_code = 'A'
+        self.test_code = 'ABC'
         self.test_exchange = 'AX'
 
         self.fields = ['Name', 'Code', 'Exchange', ]
@@ -262,23 +261,17 @@ class YahooQuoteGetRawQuoteTestCase(unittest.TestCase):
             'ErrorIndicationreturnedforsymbolchangedinvalid': None,
         }
 
-        self.test_good_quote = YahooQuote(self.good_code, self.test_exchange, defer=True)
+        self.test_quote = YahooQuote(self.test_code, self.test_exchange, defer=True)
 
-        self.test_bad_quote = YahooQuote(self.bad_code, self.test_exchange, defer=True)
-
-        self.test_quote_fields = YahooQuote(self.good_code, self.test_exchange, self.fields, defer=True)
+        self.test_quote_fields = YahooQuote(self.test_code, self.test_exchange, self.fields, defer=True)
 
     def test_quote_good_code(self):
         """get_raw_quote should return True given a valid code."""
-        raw_quote = self.test_good_quote.get_raw_quote()
+        raw_quote = self.test_quote.get_raw_quote()
 
         # Because the number of fields in the YQL quote is high, difficult to check
         # with predefined ones in a test case.
         self.assertTrue(raw_quote is not None)
-
-    def test_quote_bad_code(self):
-        """get_raw_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
 
     def test_quote_get_fields(self):
         """YahooQuote.get_raw_quote should return the requested fields only."""
@@ -666,8 +659,7 @@ class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-        self.bad_code = 'A'
+        self.test_code = 'ABC'
         self.test_exchange = 'AX'
 
         self.fields = ['Name', 'Code', 'Exchange', ]
@@ -677,23 +669,17 @@ class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
             'n': 'ADEL BRTN FPO', 's': 'ABC.AX', 'x': 'ASX'
         }
 
-        self.test_good_quote = YahooCSVQuote(self.good_code, self.test_exchange, defer=True)
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_exchange, defer=True)
 
-        self.test_bad_quote = YahooCSVQuote(self.bad_code, self.test_exchange, defer=True)
-
-        self.test_quote_fields = YahooCSVQuote(self.good_code, self.test_exchange, self.fields, defer=True)
+        self.test_quote_fields = YahooCSVQuote(self.test_code, self.test_exchange, self.fields, defer=True)
 
     def test_quote_good_code(self):
         """YahooCSVQuote.get_raw_quote should return True given a valid code."""
-        raw_quote = self.test_good_quote.get_raw_quote()
+        raw_quote = self.test_quote.get_raw_quote()
 
         # Because the number of fields in the CSVquote is high, difficult to check
         # with predefined ones in a test case.
         self.assertTrue(raw_quote is not None)
-
-    def test_quote_bad_code(self):
-        """YahooCSVQuote.get_raw_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
 
     def test_quote_get_fields(self):
         """YahooCSVQuote.get_raw_quote should return the requested fields only."""
@@ -1055,8 +1041,7 @@ class YahooQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-        self.bad_code = 'A'
+        self.test_code = 'ABC'
         self.test_exchange = 'AX'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
@@ -1088,25 +1073,17 @@ class YahooQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
             {'Date': '2013-04-10', 'Close': '3.40', 'Volume': '2076700', },
         ]
 
-        self.test_good_quote = YahooQuoteHistory(
-            self.good_code, self.test_exchange, self.test_dates, defer=True
-        )
-
-        self.test_bad_quote = YahooQuoteHistory(
-            self.bad_code, self.test_exchange, self.test_dates, defer=True
+        self.test_quote = YahooQuoteHistory(
+            self.test_code, self.test_exchange, self.test_dates, defer=True
         )
 
         self.test_quote_fields = YahooQuoteHistory(
-            self.good_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
 
     def test_quote_good_code(self):
         """YahooQuoteHistory.get_raw_quote should return True given a valid code."""
-        self.assertEqual(self.test_good_quote.get_raw_quote(), self.test_raw_quote)
-
-    def test_quote_bad_code(self):
-        """YahooQuoteHistory.get_raw_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
+        self.assertEqual(self.test_quote.get_raw_quote(), self.test_raw_quote)
 
     def test_quote_get_fields(self):
         """YahooQuoteHistory.get_raw_quote should return the requested fields only."""
@@ -1418,8 +1395,7 @@ class YahooCSVQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.good_code = 'ABC'
-        self.bad_code = 'A'
+        self.test_code = 'ABC'
         self.test_exchange = 'AX'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
@@ -1441,21 +1417,13 @@ class YahooCSVQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
             }
         ]
 
-        self.test_good_quote = YahooCSVQuoteHistory(
-            self.good_code, self.test_exchange, self.test_dates, defer=True
-        )
-
-        self.test_bad_quote = YahooCSVQuoteHistory(
-            self.bad_code, self.test_exchange, self.test_dates, defer=True
+        self.test_quote = YahooCSVQuoteHistory(
+            self.test_code, self.test_exchange, self.test_dates, defer=True
         )
 
     def test_quote_good_code(self):
         """YahooCSVQuoteHistory.get_raw_quote should return True given a valid code."""
-        self.assertEqual(self.test_good_quote.get_raw_quote(), self.test_raw_quote)
-
-    def test_quote_bad_code(self):
-        """YahooCSVQuoteHistory.get_raw_quote should raise an Exception given an invalid code."""
-        self.assertRaises(Exception, self.test_bad_quote.get_raw_quote)
+        self.assertEqual(self.test_quote.get_raw_quote(), self.test_raw_quote)
 
 
 class YahooCSVQuoteHistoryParseQuoteTestCase(unittest.TestCase):
