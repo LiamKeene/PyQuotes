@@ -17,7 +17,7 @@ class QuoteBase(object):
     different models.
 
     """
-    def __init__(self, code, fields='*', defer=False):
+    def __init__(self, code, exchange, fields='*', defer=False):
         """Initialise the quote model given the stock code.
 
         Optionally given a list of field names that contain the required data
@@ -27,6 +27,7 @@ class QuoteBase(object):
         """
         # Store the stock code and columns of data to fetch
         self.code = code
+        self.exchange = exchange
         self.fields = fields
 
         # Default value of quote
@@ -235,9 +236,6 @@ class YahooQuote(LatestQuoteBase, YahooQuoteDateTimeParseMixin):
         """Get a quote from the Yahoo YQL finance tables and return the result.
 
         """
-        # Only interested in Australian equities at the moment
-        exchange = 'AX'
-
         # Error column name - save typing
         error_column = 'ErrorIndicationreturnedforsymbolchangedinvalid'
 
@@ -260,7 +258,7 @@ class YahooQuote(LatestQuoteBase, YahooQuoteDateTimeParseMixin):
 
         # Execute the query and get the response
         query = 'select %(columns)s from yahoo.finance.quotes where symbol = "%(code)s.%(exchange)s"' \
-            % {'code': self.code, 'exchange': exchange, 'columns': columns, }
+            % {'code': self.code, 'exchange': self.exchange, 'columns': columns, }
         response = y.execute(query, env=env)
 
         # Get the quote and the error field
@@ -310,9 +308,6 @@ class YahooCSVQuote(LatestQuoteBase, YahooQuoteDateTimeParseMixin):
         if not len(self.code) == 3:
             raise Exception('Stock code appears incorrect')
 
-        # Only interested in Australian equities at the moment
-        exchange = 'AX'
-
         # Determine the query columns
         if self.fields == '*':
             columns = self._known_fields.keys()
@@ -325,7 +320,7 @@ class YahooCSVQuote(LatestQuoteBase, YahooQuoteDateTimeParseMixin):
         quote_url = u'http://finance.yahoo.com/d/quotes.csv' \
             '?s=%(code)s.%(exchange)s&f=%(columns)s' \
             % {
-                'code': self.code, 'exchange': exchange, 'columns': columns,
+                'code': self.code, 'exchange': self.exchange, 'columns': columns,
             }
 
         response = urllib2.urlopen(quote_url)
@@ -376,7 +371,7 @@ class HistoryQuoteBase(QuoteBase):
     for quote models that retrieve historical quotes.
 
     """
-    def __init__(self, code, date_range, fields='*', defer=False):
+    def __init__(self, code, exchange, date_range, fields='*', defer=False):
         """Initialise the quote model given the stock code and date range.
 
         Optionally given a list of field names that contain the required data
@@ -388,7 +383,7 @@ class HistoryQuoteBase(QuoteBase):
         self.date_range = date_range
 
         # Initialise the superclass
-        super(HistoryQuoteBase, self).__init__(code, fields=fields, defer=defer)
+        super(HistoryQuoteBase, self).__init__(code, exchange, fields=fields, defer=defer)
 
     def parse_quote(self):
         """Parse the raw data from a historical quote into a dictionary of useful data.
@@ -461,9 +456,6 @@ class YahooQuoteHistory(HistoryQuoteBase):
         start_date = date_range[0]
         end_date = date_range[1]
 
-        # Only interested in Australian equities at the moment
-        exchange = 'AX'
-
         # Create query object - must set the environment for community tables
         y = yql.Public()
         env = 'http://www.datatables.org/alltables.env'
@@ -482,7 +474,7 @@ class YahooQuoteHistory(HistoryQuoteBase):
             'where symbol = "%(code)s.%(exchange)s" ' \
             'and startDate = "%(start_date)s" and endDate = "%(end_date)s"' \
             % {
-                'code': self.code, 'exchange': exchange, 'columns': columns,
+                'code': self.code, 'exchange': self.exchange, 'columns': columns,
                 'start_date': start_date, 'end_date': end_date,
             }
         response = y.execute(query, env=env)
@@ -537,9 +529,6 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
         start_date = date_range[0]
         end_date = date_range[1]
 
-        # Only interested in Australian equities at the moment
-        exchange = 'AX'
-
         quote_url = 'http://ichart.yahoo.com/table.csv' \
             '?s=%(code)s.%(exchange)s' \
             '&a=%(start_month)s&b=%(start_day)s&c=%(start_year)s' \
@@ -547,7 +536,7 @@ class YahooCSVQuoteHistory(HistoryQuoteBase):
             '&g=%(period)s' \
             '&ignore=.csv' \
             % {
-                'code': self.code, 'exchange': exchange,
+                'code': self.code, 'exchange': self.exchange,
                 'start_month': start_date.month - 1, 'start_day': start_date.day,
                 'start_year': start_date.year, 'end_month': end_date.month - 1,
                 'end_day': end_date.day, 'end_year': end_date.year,

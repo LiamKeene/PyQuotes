@@ -14,6 +14,7 @@ class YahooQuoteTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
 
         self.test_fields = ['Name', 'Code', 'Exchange', ]
 
@@ -30,7 +31,7 @@ class YahooQuoteTestCase(unittest.TestCase):
 
     def test_quote_good_code(self):
         """YahooQuote should create a new quote object, fetch a quote and parse it."""
-        quote = YahooQuote(self.test_code)
+        quote = YahooQuote(self.test_code, self.test_exchange)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
@@ -40,7 +41,7 @@ class YahooQuoteTestCase(unittest.TestCase):
 
     def test_quote_columns(self):
         """YahooQuote should create a new quote object, fetch and parse given columns."""
-        quote = YahooQuote(self.test_code, self.test_fields)
+        quote = YahooQuote(self.test_code, self.test_exchange, self.test_fields)
 
         self.assertEqual(quote.raw_quote, self.test_raw_quote)
 
@@ -48,7 +49,7 @@ class YahooQuoteTestCase(unittest.TestCase):
 
     def test_quote_deferred(self):
         """YahooQuote should defer fetching and parsing of quote if required."""
-        quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+        quote = YahooQuote(self.test_code, self.test_exchange, self.test_fields, defer=True)
 
         # Check quote is unprocessed
         self.assertEqual(quote.quote_fields, {})
@@ -62,7 +63,8 @@ class YahooQuoteGetAttributesTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
-        self.test_quote = YahooQuote(self.test_code, defer=True)
+        self.test_exchange = 'AX'
+        self.test_quote = YahooQuote(self.test_code, self.test_exchange, defer=True)
 
         self.test_price = Decimal('3.32')
         self.test_price_date = date(2013, 4, 10)
@@ -124,7 +126,7 @@ class YahooQuoteGetAttributesTestCase(unittest.TestCase):
         self.assertRaises(Exception, getattr, self.test_quote, 'volume')
 
 
-class YahooQuoteGetColumnFromFieldTestCase(TestCase):
+class YahooQuoteGetColumnFromFieldTestCase(unittest.TestCase):
     """Test Case for the `YahooQuote`.`get_column_from_field` function.
 
     The `get_column_from_field` function should return the column name if given
@@ -133,11 +135,12 @@ class YahooQuoteGetColumnFromFieldTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Name', 'Code', 'Close', 'Volume']
         self.test_columns = ['Name', 'Symbol', 'LastTradePriceOnly', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooQuote(self.test_code, self.test_exchange, self.test_fields, defer=True)
 
-        self.test_unknown_field = 'RandomField'
+        self.test_unknown_column = 'RandomField'
 
     def test_get_field_from_column(self):
         """get_field_from_column should return field name given the quote column."""
@@ -158,7 +161,7 @@ class YahooQuoteGetColumnFromFieldTestCase(TestCase):
         )
 
 
-class YahooQuoteGetFieldFromColumnTestCase(TestCase):
+class YahooQuoteGetFieldFromColumnTestCase(unittest.TestCase):
     """Test Case for the `YahooQuote`.`get_field_from_column` function.
 
     The `get_field_from_column` function should return the field name if given
@@ -167,9 +170,10 @@ class YahooQuoteGetFieldFromColumnTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Name', 'Code', 'Close', 'Volume']
         self.test_columns = ['Name', 'Symbol', 'LastTradePriceOnly', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooQuote(self.test_code, self.test_exchange, self.test_fields, defer=True)
 
         self.test_unknown_column = 'RandomColumn'
 
@@ -201,8 +205,9 @@ class YahooQuoteGetQuoteFieldsTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Code', 'Close', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooQuote(self.test_code, self.test_exchange, self.test_fields, defer=True)
         self.test_quote_fields = {
             'Symbol': ('Code', str),
             'LastTradePriceOnly': ('Close', Decimal),
@@ -211,12 +216,12 @@ class YahooQuoteGetQuoteFieldsTestCase(unittest.TestCase):
 
         self.test_get_all_fields = '*'
         self.test_quote_all_fields = YahooQuote(
-            self.test_code, self.test_get_all_fields, defer=True
+            self.test_code, self.test_exchange, self.test_get_all_fields, defer=True
         )
 
         self.test_unknown_fields = ['RandomField', ]
         self.test_quote_unknown_fields = YahooQuote(
-            self.test_code, self.test_unknown_fields, defer=True
+            self.test_code, self.test_exchange, self.test_unknown_fields, defer=True
         )
 
     def test_get_quote_fields(self):
@@ -247,6 +252,7 @@ class YahooQuoteGetRawQuoteTestCase(unittest.TestCase):
     def setUp(self):
         self.good_code = 'ABC'
         self.bad_code = 'A'
+        self.test_exchange = 'AX'
 
         self.fields = ['Name', 'Code', 'Exchange', ]
 
@@ -256,11 +262,11 @@ class YahooQuoteGetRawQuoteTestCase(unittest.TestCase):
             'ErrorIndicationreturnedforsymbolchangedinvalid': None,
         }
 
-        self.test_good_quote = YahooQuote(self.good_code, defer=True)
+        self.test_good_quote = YahooQuote(self.good_code, self.test_exchange, defer=True)
 
-        self.test_bad_quote = YahooQuote(self.bad_code, defer=True)
+        self.test_bad_quote = YahooQuote(self.bad_code, self.test_exchange, defer=True)
 
-        self.test_quote_fields = YahooQuote(self.good_code, self.fields, defer=True)
+        self.test_quote_fields = YahooQuote(self.good_code, self.test_exchange, self.fields, defer=True)
 
     def test_quote_good_code(self):
         """get_raw_quote should return True given a valid code."""
@@ -284,7 +290,7 @@ class YahooQuoteParseDateTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_quote = YahooQuote('ABC', 'AX', defer=True)
         self.test_raw_date = '04/10/2013'
         self.test_parsed_date = date(2013, 4, 10)
 
@@ -307,7 +313,7 @@ class YahooQuoteParseDateTimeTestCase(unittest.TestCase):
     """
     def setUp(self):
         # Create a deferred quote
-        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_quote = YahooQuote('ABC', 'AX', defer=True)
 
         # The raw date and time from a quote (not called so we can control them)
         self.test_raw_date = '04/10/2013'
@@ -342,10 +348,17 @@ class YahooQuoteParseQuoteTestCase(unittest.TestCase):
     def setUp(self):
         # Create three test quote objects
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Symbol', 'LastTradePriceOnly', 'Volume']
-        self.test_quote = YahooQuote(self.test_code, self.test_fields, defer=True)
-        self.test_quote_partial = YahooQuote(self.test_code, self.test_fields, defer=True)
-        self.test_quote_no_fields = YahooQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
+        self.test_quote_partial = YahooQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
+        self.test_quote_no_fields = YahooQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
 
         # Explicitly set the quote fields and raw quote (is this a good idea?)
         self.test_quote.quote_fields = {
@@ -395,7 +408,7 @@ class YahooQuoteParseTimeTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_quote = YahooQuote('ABC', 'AX', defer=True)
         self.test_raw_time = '10:21pm'
         self.test_parsed_time = time(22, 21)
 
@@ -413,6 +426,7 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
 
         self.test_fields = ['Name', 'Code', 'Exchange', ]
 
@@ -428,7 +442,7 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
 
     def test_quote_good_code(self):
         """YahooCSVQuote should create a new quote object, fetch a quote and parse it."""
-        quote = YahooCSVQuote(self.test_code)
+        quote = YahooCSVQuote(self.test_code, self.test_exchange)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
@@ -438,7 +452,7 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
 
     def test_quote_columns(self):
         """YahooCSVQuote should create a new quote object, fetch and parse given columns."""
-        quote = YahooCSVQuote(self.test_code, self.test_fields)
+        quote = YahooCSVQuote(self.test_code, self.test_exchange, self.test_fields)
 
         self.assertEqual(quote.raw_quote, self.test_raw_quote)
 
@@ -446,7 +460,7 @@ class YahooCSVQuoteTestCase(unittest.TestCase):
 
     def test_quote_deferred(self):
         """YahooCSVQuote should defer fetching and parsing of quote if required."""
-        quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        quote = YahooCSVQuote(self.test_code, self.test_exchange, self.test_fields, defer=True)
 
         # Check quote is unprocessed
         self.assertEqual(quote.quote_fields, {})
@@ -460,12 +474,13 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Code', 'Close', 'Date', 'Time', ]
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_exchange, self.test_fields, defer=True)
 
         self.test_price = Decimal('3.32')
         self.test_price_date = date(2013, 4, 10)
-        self.test_price_time = time(12, 20, 0)
+        self.test_price_time = time(10, 21, 0)
 
         # Explicitly set the fields and raw quote
         self.test_quote.quote_fields = {
@@ -476,7 +491,7 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
         }
 
         self.test_quote.raw_quote = {
-            's':  'ABC.AX', 'l1': '3.320', 'd1': '4/10/2013', 't1': '10:21pm'
+            's':  'ABC.AX', 'l1': '3.320', 'd1': '4/10/2013', 't1': '10:21am'
         }
 
     def test_quote_price(self):
@@ -520,7 +535,7 @@ class YahooCSVQuoteGetAttributesTestCase(unittest.TestCase):
         self.assertRaises(Exception, getattr, self.test_quote, 'volume')
 
 
-class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
+class YahooCSVQuoteGetColumnFromFieldTestCase(unittest.TestCase):
     """Test Case for the `YahooCSVQuote`.`get_column_from_field` function.
 
     The `get_column_from_field` function should return the column (symbol) if
@@ -529,9 +544,12 @@ class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Name', 'Code', 'Close', 'Volume']
         self.test_symbols = ('n', 's', 'l1', 'v')
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooCSVQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
 
         self.test_unknown_field = 'RandomField'
 
@@ -554,7 +572,7 @@ class YahooCSVQuoteGetColumnFromFieldTestCase(TestCase):
         )
 
 
-class YahooCSVQuoteGetFieldFromColumnTestCase(TestCase):
+class YahooCSVQuoteGetFieldFromColumnTestCase(unittest.TestCase):
     """Test Case for the `YahooCSVQuote`.`get_field_from_column` function.
 
     The `get_field_from_column` function should return the output field name if
@@ -563,9 +581,12 @@ class YahooCSVQuoteGetFieldFromColumnTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Name', 'Code', 'Close', 'Volume']
         self.test_columns = ('n', 's', 'l1', 'v')
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooCSVQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
 
         self.test_unknown_field = 'RandomField'
 
@@ -599,10 +620,12 @@ class YahooCSVQuoteGetQuoteFieldsTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Code', 'Close', 'Volume']
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
+        self.test_quote = YahooCSVQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
         self.test_quote_fields = {
             's': ('Code', str),
             'l1': ('Close', Decimal),
@@ -611,12 +634,12 @@ class YahooCSVQuoteGetQuoteFieldsTestCase(unittest.TestCase):
 
         self.test_get_all_fields = '*'
         self.test_quote_all_fields = YahooCSVQuote(
-            self.test_code, self.test_get_all_fields, defer=True
+            self.test_code, self.test_exchange, self.test_get_all_fields, defer=True
         )
 
         self.test_unknown_fields = ['RandomField', ]
         self.test_quote_unknown_fields = YahooCSVQuote(
-            self.test_code, self.test_unknown_fields, defer=True
+            self.test_code, self.test_exchange, self.test_unknown_fields, defer=True
         )
 
     def test_get_quote_fields(self):
@@ -645,6 +668,7 @@ class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
     def setUp(self):
         self.good_code = 'ABC'
         self.bad_code = 'A'
+        self.test_exchange = 'AX'
 
         self.fields = ['Name', 'Code', 'Exchange', ]
 
@@ -653,11 +677,11 @@ class YahooCSVQuoteGetRawQuoteTestCase(unittest.TestCase):
             'n': 'ADEL BRTN FPO', 's': 'ABC.AX', 'x': 'ASX'
         }
 
-        self.test_good_quote = YahooCSVQuote(self.good_code, defer=True)
+        self.test_good_quote = YahooCSVQuote(self.good_code, self.test_exchange, defer=True)
 
-        self.test_bad_quote = YahooCSVQuote(self.bad_code, defer=True)
+        self.test_bad_quote = YahooCSVQuote(self.bad_code, self.test_exchange, defer=True)
 
-        self.test_quote_fields = YahooCSVQuote(self.good_code, self.fields, defer=True)
+        self.test_quote_fields = YahooCSVQuote(self.good_code, self.test_exchange, self.fields, defer=True)
 
     def test_quote_good_code(self):
         """YahooCSVQuote.get_raw_quote should return True given a valid code."""
@@ -681,7 +705,7 @@ class YahooCSVQuoteParseDateTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.test_quote = YahooCSVQuote('ABC', defer=True)
+        self.test_quote = YahooCSVQuote('ABC', 'AX', defer=True)
         self.test_raw_date = '04/10/2013'
         self.test_parsed_date = date(2013, 4, 10)
 
@@ -704,7 +728,7 @@ class YahooCSVQuoteParseDateTimeTestCase(unittest.TestCase):
     """
     def setUp(self):
         # Create a deferred quote
-        self.test_quote = YahooQuote('ABC', defer=True)
+        self.test_quote = YahooQuote('ABC', 'AX', defer=True)
 
         # The raw date and time from a quote (not called so we can control them)
         self.test_raw_date = '04/10/2013'
@@ -737,16 +761,22 @@ class YahooCSVQuoteParseQuoteTestCase(unittest.TestCase):
     def setUp(self):
         # Create three test quote objects
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_fields = ['Code', 'Close', 'Volume', ]
         self.test_quote_fields = {
             's': ('Code', str),
             'l1': ('Close', Decimal),
             'v': ('Volume', Decimal),
         }
-        self.test_quote = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
-        self.test_quote_partial = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
-        self.test_quote_no_fields = YahooCSVQuote(self.test_code, self.test_fields, defer=True)
-
+        self.test_quote = YahooCSVQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
+        self.test_quote_partial = YahooCSVQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
+        self.test_quote_no_fields = YahooCSVQuote(
+            self.test_code, self.test_exchange, self.test_fields, defer=True
+        )
         # Explicitly set the quote fields and raw quote
         self.test_quote.quote_fields = self.test_quote_fields
         self.test_quote.raw_quote = {
@@ -794,6 +824,7 @@ class YahooCSVQuoteParseSymbolsTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_symbols_dict = {
             'nsx': ('n', 's', 'x'),
             'ohgl1v': ('o', 'h', 'g', 'l1', 'v', ),
@@ -802,7 +833,7 @@ class YahooCSVQuoteParseSymbolsTestCase(unittest.TestCase):
             ),
         }
 
-        self.test_quote = YahooCSVQuote(self.test_code, defer=True)
+        self.test_quote = YahooCSVQuote(self.test_code, self.test_exchange, defer=True)
 
     def test_parse_symbols(self):
         """parse_symbols should return a correctly parsed list of symbols."""
@@ -820,7 +851,7 @@ class YahooCSVQuoteParseTimeTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.test_quote = YahooCSVQuote('ABC', defer=True)
+        self.test_quote = YahooCSVQuote('ABC', 'AX', defer=True)
         self.test_raw_time = '10:21pm'
         self.test_parsed_time = time(22, 21)
 
@@ -838,6 +869,7 @@ class YahooQuoteHistoryTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'Close', 'Volume']
@@ -864,7 +896,7 @@ class YahooQuoteHistoryTestCase(unittest.TestCase):
 
     def test_quote_good_code(self):
         """YahooQuoteHistory should create a new quote object, fetch a quote and parse it."""
-        quote = YahooQuoteHistory(self.test_code, self.test_dates)
+        quote = YahooQuoteHistory(self.test_code, self.test_exchange, self.test_dates)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
@@ -874,7 +906,7 @@ class YahooQuoteHistoryTestCase(unittest.TestCase):
 
     def test_quote_columns(self):
         """YahooQuoteHistory should create a new quote object, fetch and parse given columns."""
-        quote = YahooQuoteHistory(self.test_code, self.test_dates, self.test_fields)
+        quote = YahooQuoteHistory(self.test_code, self.test_exchange, self.test_dates, self.test_fields)
 
         self.assertEqual(quote.raw_quote, self.test_raw_quote)
 
@@ -882,7 +914,7 @@ class YahooQuoteHistoryTestCase(unittest.TestCase):
 
     def test_quote_deferred(self):
         """YahooQuoteHistory should defer fetching and parsing of quote if required."""
-        quote = YahooQuoteHistory(self.test_code, self.test_dates, self.test_fields, defer=True)
+        quote = YahooQuoteHistory(self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True)
 
         # Check quote is unprocessed
         self.assertEqual(quote.quote_fields, {})
@@ -890,7 +922,7 @@ class YahooQuoteHistoryTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
-class YahooQuoteHistoryGetColumnFromFieldTestCase(TestCase):
+class YahooQuoteHistoryGetColumnFromFieldTestCase(unittest.TestCase):
     """Test Case for the `YahooQuoteHistory`.`get_column_from_field` function.
 
     The `get_column_from_field` function should return the column name if given
@@ -899,10 +931,12 @@ class YahooQuoteHistoryGetColumnFromFieldTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'Close', 'Adj Close']
+        self.test_columns = ['Date', 'Close', 'Adj_Close']
         self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
 
         self.test_unknown_field = 'RandomField'
@@ -926,7 +960,7 @@ class YahooQuoteHistoryGetColumnFromFieldTestCase(TestCase):
         )
 
 
-class YahooQuoteHistoryGetFieldFromColumnTestCase(TestCase):
+class YahooQuoteHistoryGetFieldFromColumnTestCase(unittest.TestCase):
     """Test Case for the `YahooQuoteHistory`.`get_field_from_column` function.
 
     The `get_field_from_column` function should return the column name if given
@@ -935,11 +969,12 @@ class YahooQuoteHistoryGetFieldFromColumnTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'Close', 'Adj Close']
         self.test_columns = ['Date', 'Close', 'Adj_Close']
         self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
 
         self.test_unknown_column = 'RandomColumn'
@@ -973,10 +1008,11 @@ class YahooQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'High', 'Low', 'Close', 'Volume']
         self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
         self.test_quote_fields = {
             'Date': ('Date', parse_date), 'High': ('High', Decimal),
@@ -986,12 +1022,12 @@ class YahooQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
 
         self.test_get_all_fields = '*'
         self.test_quote_all_fields = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_get_all_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_get_all_fields, defer=True
         )
 
         self.test_unknown_fields = ['RandomField', ]
         self.test_quote_unknown_fields = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_unknown_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_unknown_fields, defer=True
         )
 
     def test_get_quote_fields(self):
@@ -1021,6 +1057,7 @@ class YahooQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
     def setUp(self):
         self.good_code = 'ABC'
         self.bad_code = 'A'
+        self.test_exchange = 'AX'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'Close', 'Volume', ]
@@ -1043,22 +1080,24 @@ class YahooQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
                 'Low': '3.38', 'Close': '3.40', 'Volume': '2076700',
                 'Adj_Close': '3.40', 'date': '2013-04-10',
             }
-        ] self.test_raw_quote_fields = [
-            {'Date': '2013-04-12', 'Close': '3.33', 'Volume': '993300', },
-            {'Date': '2013-04-11', 'Close': '3.34', 'Volume': '1574800', },
-            {'Date': '2013-04-10', 'Close': '3.40', 'Volume': '771800', },
+        ]
+
+        self.test_raw_quote_fields = [
+            {'Date': '2013-04-12', 'Close': '3.33', 'Volume': '1351200', },
+            {'Date': '2013-04-11', 'Close': '3.34', 'Volume': '1225300', },
+            {'Date': '2013-04-10', 'Close': '3.40', 'Volume': '2076700', },
         ]
 
         self.test_good_quote = YahooQuoteHistory(
-            self.good_code, self.test_dates, defer=True
+            self.good_code, self.test_exchange, self.test_dates, defer=True
         )
 
         self.test_bad_quote = YahooQuoteHistory(
-            self.bad_code, self.test_dates, defer=True
+            self.bad_code, self.test_exchange, self.test_dates, defer=True
         )
 
         self.test_quote_fields = YahooQuoteHistory(
-            self.good_code, self.test_dates, self.test_fields, defer=True
+            self.good_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
 
     def test_quote_good_code(self):
@@ -1081,18 +1120,19 @@ class YahooQuoteHistoryParseQuoteTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10', ]
         self.test_fields = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume',]
 
         self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_date_range, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_date_range, self.test_fields, defer=True
         )
         self.test_quote_partial = YahooQuoteHistory(
-            self.test_code, self.test_date_range, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_date_range, self.test_fields, defer=True
         )
         self.test_quote_no_fields = YahooQuoteHistory(
-            self.test_code, self.test_date_range, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_date_range, self.test_fields, defer=True
         )
 
         # Explicitly set the quote fields and raw quote (is this a good idea?)
@@ -1183,6 +1223,7 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'Close', 'Volume']
@@ -1218,7 +1259,7 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
 
     def test_quote_good_code(self):
         """YahooCSVQuoteHistory should create a new quote object, fetch a quote and parse it."""
-        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates)
+        quote = YahooCSVQuoteHistory(self.test_code, self.test_exchange, self.test_dates)
 
         # Check we got a raw quote
         self.assertTrue(quote.raw_quote is not None)
@@ -1228,7 +1269,7 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
 
     def test_quote_columns(self):
         """YahooCSVQuoteHistory should create a new quote object, fetch and parse given columns."""
-        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates, self.test_fields)
+        quote = YahooCSVQuoteHistory(self.test_code, self.test_exchange, self.test_dates, self.test_fields)
 
         self.assertEqual(quote.raw_quote, self.test_raw_quote)
 
@@ -1236,7 +1277,7 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
 
     def test_quote_deferred(self):
         """YahooCSVQuoteHistory should defer fetching and parsing of quote if required."""
-        quote = YahooCSVQuoteHistory(self.test_code, self.test_dates, self.test_fields, defer=True)
+        quote = YahooCSVQuoteHistory(self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True)
 
         # Check quote is unprocessed
         self.assertEqual(quote.quote_fields, {})
@@ -1244,7 +1285,7 @@ class YahooCSVQuoteHistoryTestCase(unittest.TestCase):
         self.assertTrue(quote.quote is None)
 
 
-class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(TestCase):
+class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(unittest.TestCase):
     """Test Case for the `YahooCSVQuoteHistory`.`get_column_from_field` function.
 
     The `get_column_from_field` function should return the column name if given
@@ -1253,11 +1294,12 @@ class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_columns = ['Date', 'Close', 'Adj Close']
         self.test_fields = ['Date', 'Close', 'Adj Close']
         self.test_quote = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
 
         self.test_unknown_field = 'RandomField'
@@ -1281,7 +1323,7 @@ class YahooCSVQuoteHistoryGetColumnFromFieldTestCase(TestCase):
         )
 
 
-class YahooCSVQuoteHistoryGetFieldFromColumnTestCase(TestCase):
+class YahooCSVQuoteHistoryGetFieldFromColumnTestCase(unittest.TestCase):
     """Test Case for the `YahooQuoteHistory`.`get_field_from_column` function.
 
     The `get_field_from_column` function should return the column name if given
@@ -1290,11 +1332,12 @@ class YahooCSVQuoteHistoryGetFieldFromColumnTestCase(TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_columns = ['Date', 'Close', 'Adj_Close']
         self.test_fields = ['Date', 'Close', 'Adj Close']
         self.test_quote = YahooQuoteHistory(
-            self.test_code, self.test_dates, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
 
         self.test_unknown_column = 'RandomColumn'
@@ -1328,10 +1371,11 @@ class YahooCSVQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_fields = ['Date', 'High', 'Low', 'Close', 'Volume']
         self.test_quote = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_fields, defer=True
         )
         self.test_quote_fields = {
             'Date': ('Date', parse_date), 'High': ('High', Decimal),
@@ -1341,12 +1385,12 @@ class YahooCSVQuoteHistoryGetQuoteFieldsTestCase(unittest.TestCase):
 
         self.test_get_all_fields = '*'
         self.test_quote_all_fields = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, self.test_get_all_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_get_all_fields, defer=True
         )
 
         self.test_unknown_fields = ['RandomField', ]
         self.test_quote_unknown_fields = YahooCSVQuoteHistory(
-            self.test_code, self.test_dates, self.test_unknown_fields, defer=True
+            self.test_code, self.test_exchange, self.test_dates, self.test_unknown_fields, defer=True
         )
 
     def test_get_quote_fields(self):
@@ -1376,6 +1420,7 @@ class YahooCSVQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
     def setUp(self):
         self.good_code = 'ABC'
         self.bad_code = 'A'
+        self.test_exchange = 'AX'
 
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
 
@@ -1397,11 +1442,11 @@ class YahooCSVQuoteHistoryGetRawQuoteTestCase(unittest.TestCase):
         ]
 
         self.test_good_quote = YahooCSVQuoteHistory(
-            self.good_code, self.test_dates, defer=True
+            self.good_code, self.test_exchange, self.test_dates, defer=True
         )
 
         self.test_bad_quote = YahooCSVQuoteHistory(
-            self.bad_code, self.test_dates, defer=True
+            self.bad_code, self.test_exchange, self.test_dates, defer=True
         )
 
     def test_quote_good_code(self):
@@ -1421,18 +1466,19 @@ class YahooCSVQuoteHistoryParseQuoteTestCase(unittest.TestCase):
     def setUp(self):
         # The CSV historical quote has defined headers (the first row of CSV data)
         self.test_code = 'ABC'
+        self.test_exchange = 'AX'
         self.test_dates = [date(2013, 4, 10), date(2013, 4, 12)]
         self.test_date_range = ['2013-04-12', '2013-04-11', '2013-04-10', ]
         self.test_fields = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume',]
 
         self.test_quote = YahooCSVQuoteHistory(
-            self.test_code, self.test_date_range, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_date_range, self.test_fields, defer=True
         )
         self.test_quote_partial = YahooCSVQuoteHistory(
-            self.test_code, self.test_date_range, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_date_range, self.test_fields, defer=True
         )
         self.test_quote_no_fields = YahooCSVQuoteHistory(
-            self.test_code, self.test_date_range, self.test_fields, defer=True
+            self.test_code, self.test_exchange, self.test_date_range, self.test_fields, defer=True
         )
 
         # Explicitly set the quote fields and raw quote (is this a good idea?)
