@@ -2,39 +2,45 @@
 > Get stock quotes from a variety of sources using Python
 
 ## About
-PyQuotes queries the Yahoo YQL Community tables to get a stock quote.
+PyQuotes retrieves stock quotes from Yahoo's YQL Community tables or CSV API.
+PyQuotes handles the fetching of quotes and parsing of the data into a more
+readable dictionary format.
+
+The quote models have plenty of tests, but there is still so much work I'd like
+to do, so consider this _very_ alpha.
 
 ## Usage
-Currently only querying Australian stocks is supported.
-
 Quotes can be obtained from Yahoo's YQL and CSV APIs.
 
-To get a single quote for a company 'ABC' (delayed by 20min) you can use the
-quote objects ```YahooQuote``` and ```YahooCSVQuote```.  The quote objects fetch
-and parse the quote data.  An optional list of columns to be used in the query
-can be added to the quote constructors.
+To get a single quote for a company 'ABC' on the Australia stock exchange (code: AX)
+(delayed by 20min) you can use the quote objects ```YahooQuote``` and
+```YahooCSVQuote```.  The quote objects fetch and parse the quote data.  An
+optional list of columns to be used in the query can be added to the quote
+constructors.
 ```python
->>> quote = YahooQuote('ABC')           # Quote from YQL API
+>>> quote = YahooQuote('ABC', 'AX')           # Quote from YQL API
 >>> quote.price
 Decimal('3.310')
->>> csv_quote = YahooCSVQuote('ABC')    # Quote from CSV API
+>>> csv_quote = YahooCSVQuote('ABC', 'AX')    # Quote from CSV API
 >>> csv_quote.price_date
 datetime.date(2013, 4, 10)
->>> quote = YahooQuote('ABC', ['Close', 'Volume', 'Date'])
+>>> quote = YahooQuote('ABC', 'AX', ['Close', 'Volume', 'Date'])
 >>> quote.quote
 {'Volume': Decimal('1123210'), 'Date': datetime.date(2013, 4, 10), 'Close': Decimal('3.310')}
 ```
+At the moment the exchange code is required, for US stocks and empty string can
+be used, but this fails for some quote models.
 
 To get a set of historical quotes given a date range you can use the quote objects
 ```YahooQuoteHistory``` and ```YahooCSVQuoteHistory```.  These objects can also
 be given a list of columes to be used in the query.
 ```python
->>> history = YahooQuoteHistory('ABC', ['2013-04-10', '2013-04-12'])        # Historical quotes from YQL API
+>>> history = YahooQuoteHistory('ABC', 'AX', ['2013-04-10', '2013-04-12'])        # Historical quotes from YQL API
 >>> history.quote
 [{'High': Decimal('3.38'), 'Date': datetime.date(2013, 4, 12), ...(truncated) },
 {'High': Decimal('3.41'), 'Date': datetime.date(2013, 4, 11), ...(truncated) },
 {'High': Decimal('3.41'), 'Date': datetime.date(2013, 4, 10), ...(truncated) }]
->>> csv_history = YahooCSVQuoteHistory('ABC', ['2013-04-10', '2013-04-12']) # Historical quotes from CSV API
+>>> csv_history = YahooCSVQuoteHistory('ABC', 'AX', ['2013-04-10', '2013-04-12']) # Historical quotes from CSV API
 ```
 ### Inner workings
 The ```raw_quote``` attribute contains the quote as it is returned from the API,
